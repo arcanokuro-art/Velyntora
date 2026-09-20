@@ -31,9 +31,12 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Velyntora',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      const Expanded(
+                        child: Text(
+                          'Velyntora',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                        ),
                       ),
                     ],
                   ),
