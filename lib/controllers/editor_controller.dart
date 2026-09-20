@@ -161,6 +161,52 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void renameActiveLayer(String name) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty || trimmedName == layer.name) return;
+    layer.name = trimmedName;
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  void setActiveLayerOpacity(double value) {
+    layer.opacity = value.clamp(0, 1);
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  bool moveActiveLayerUp() {
+    if (activeLayer <= 0) return false;
+    final selectedLayer = project.layers.removeAt(activeLayer);
+    activeLayer--;
+    project.layers.insert(activeLayer, selectedLayer);
+    _redoStrokes.clear();
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
+  bool moveActiveLayerDown() {
+    if (activeLayer >= project.layers.length - 1) return false;
+    final selectedLayer = project.layers.removeAt(activeLayer);
+    activeLayer++;
+    project.layers.insert(activeLayer, selectedLayer);
+    _redoStrokes.clear();
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
+  bool deleteActiveLayer() {
+    if (project.layers.length <= 1) return false;
+    project.layers.removeAt(activeLayer);
+    activeLayer = activeLayer.clamp(0, project.layers.length - 1);
+    _redoStrokes.clear();
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
   void toggleLayerVisibility(int index) {
     project.layers[index].visible = !project.layers[index].visible;
     hasUnsavedChanges = true;

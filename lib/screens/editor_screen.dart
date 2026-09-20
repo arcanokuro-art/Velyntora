@@ -260,6 +260,9 @@ class _PropertiesPanel extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 16, 10, 8),
             child: Row(children: <Widget>[
               const Expanded(child: Text('Capas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
+              IconButton(onPressed: controller.activeLayer > 0 ? controller.moveActiveLayerUp : null, icon: const Icon(Icons.arrow_upward_rounded), tooltip: 'Subir capa'),
+              IconButton(onPressed: controller.activeLayer < controller.project.layers.length - 1 ? controller.moveActiveLayerDown : null, icon: const Icon(Icons.arrow_downward_rounded), tooltip: 'Bajar capa'),
+              IconButton(onPressed: controller.project.layers.length > 1 ? () => _deleteLayer(context) : null, icon: const Icon(Icons.delete_outline_rounded), tooltip: 'Eliminar capa'),
               IconButton(onPressed: controller.addLayer, icon: const Icon(Icons.add_rounded), tooltip: 'Añadir capa'),
             ]),
           ),
@@ -275,7 +278,15 @@ class _PropertiesPanel extends StatelessWidget {
                     dense: true,
                     onTap: () => controller.selectLayer(index),
                     leading: IconButton(onPressed: () => controller.toggleLayerVisibility(index), icon: Icon(layer.visible ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 19)),
-                    title: Text(layer.name),
+                    title: Row(children: <Widget>[
+                      Expanded(child: Text(layer.name, overflow: TextOverflow.ellipsis)),
+                      IconButton(
+                        onPressed: selected ? () => _renameLayer(context) : null,
+                        icon: const Icon(Icons.edit_rounded, size: 16),
+                        tooltip: 'Renombrar capa',
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ]),
                     trailing: IconButton(onPressed: () => controller.toggleLayerLock(index), icon: Icon(layer.locked ? Icons.lock_rounded : Icons.lock_open_rounded, size: 18)),
                   ),
                 );
@@ -283,10 +294,49 @@ class _PropertiesPanel extends StatelessWidget {
             ),
           ),
           const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 2),
+            child: Row(children: <Widget>[
+              Expanded(child: Text('Opacidad de ${controller.layer.name}', overflow: TextOverflow.ellipsis)),
+              Text('${(controller.layer.opacity * 100).round()}%'),
+            ]),
+          ),
+          Slider(value: controller.layer.opacity, min: 0, max: 1, onChanged: controller.setActiveLayerOpacity),
           SwitchListTile(title: const Text('Papel cebolla'), value: controller.onionSkin, onChanged: controller.setOnionSkin),
           SwitchListTile(title: const Text('Cuadrícula'), value: controller.gridEnabled, onChanged: controller.setGridEnabled),
         ]),
       );
+
+  void _deleteLayer(BuildContext context) {
+    if (!controller.deleteActiveLayer()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El proyecto debe conservar al menos una capa.')),
+      );
+    }
+  }
+
+  Future<void> _renameLayer(BuildContext context) async {
+    final textController = TextEditingController(text: controller.layer.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Renombrar capa'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          maxLength: 40,
+          decoration: const InputDecoration(labelText: 'Nombre'),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value),
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, textController.text), child: const Text('Guardar')),
+        ],
+      ),
+    );
+    textController.dispose();
+    if (name != null) controller.renameActiveLayer(name);
+  }
 }
 
 class _Timeline extends StatelessWidget {

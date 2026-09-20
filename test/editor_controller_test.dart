@@ -72,4 +72,45 @@ void main() {
     expect(controller.deleteFrame(), isFalse);
     expect(controller.project.frameCount, 1);
   });
+
+  test('renombra la capa activa y descarta nombres vacios', () {
+    final controller = EditorController(AnimationProject(name: 'Capas'));
+    controller.renameActiveLayer('  Boceto  ');
+    expect(controller.layer.name, 'Boceto');
+
+    controller.renameActiveLayer('   ');
+    expect(controller.layer.name, 'Boceto');
+  });
+
+  test('limita la opacidad de la capa entre cero y uno', () {
+    final controller = EditorController(AnimationProject(name: 'Capas'));
+    controller.setActiveLayerOpacity(1.5);
+    expect(controller.layer.opacity, 1);
+
+    controller.setActiveLayerOpacity(-0.5);
+    expect(controller.layer.opacity, 0);
+  });
+
+  test('reordena capas conservando la seleccion', () {
+    final controller = EditorController(AnimationProject(name: 'Capas'));
+    controller.addLayer();
+    final selectedLayer = controller.layer;
+
+    expect(controller.moveActiveLayerDown(), isTrue);
+    expect(controller.activeLayer, 1);
+    expect(controller.layer, same(selectedLayer));
+    expect(controller.moveActiveLayerUp(), isTrue);
+    expect(controller.activeLayer, 0);
+    expect(controller.layer, same(selectedLayer));
+  });
+
+  test('elimina capas sin permitir borrar la ultima', () {
+    final controller = EditorController(AnimationProject(name: 'Capas'));
+    expect(controller.deleteActiveLayer(), isFalse);
+
+    controller.addLayer();
+    expect(controller.deleteActiveLayer(), isTrue);
+    expect(controller.project.layers, hasLength(1));
+    expect(controller.deleteActiveLayer(), isFalse);
+  });
 }
