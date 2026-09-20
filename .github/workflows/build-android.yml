@@ -1,0 +1,54 @@
+name: Compilar Velyntora APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Instalar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Crear soporte de Android
+        run: flutter create . --platforms=android --project-name=velyntora --org=art.arcanokuro
+
+      - name: Descargar dependencias
+        run: flutter pub get
+
+      - name: Aplicar icono de Velyntora
+        run: dart run flutter_launcher_icons
+
+      - name: Analizar código
+        run: flutter analyze
+
+      - name: Ejecutar pruebas
+        run: flutter test
+
+      - name: Compilar APK
+        run: flutter build apk --release
+
+      - name: Renombrar APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk Velyntora-Android-v0.1.0.apk
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Velyntora-Android-v0.1.0
+          path: Velyntora-Android-v0.1.0.apk
+          if-no-files-found: error
+          retention-days: 30

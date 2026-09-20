@@ -1,6 +1,6 @@
 # Velyntora
 
-Velyntora es un editor original de animación 2D para escritorio. Busca conservar la facilidad de una aplicación móvil y crecer hacia un flujo profesional, sin anuncios, marcas de agua ni funciones bloqueadas.
+Velyntora es un editor original de animación 2D. Su primera plataforma de prueba es Android mediante APK; posteriormente llegará a escritorio. Busca conservar la facilidad de una aplicación móvil y crecer hacia un flujo profesional, sin anuncios, marcas de agua ni funciones bloqueadas.
 
 ## Primera versión funcional
 
@@ -28,6 +28,14 @@ flutter run -d windows
 ```
 
 En Linux sustituye `windows` por `linux`; en macOS usa `macos`.
+
+Para Android:
+
+```bash
+flutter create . --platforms=android
+flutter pub get
+flutter build apk --release
+```
 
 ## Próximos hitos
 

@@ -31,27 +31,32 @@ class _EditorScreenState extends State<EditorScreen> {
           children: <Widget>[
             _TopBar(controller: controller),
             Expanded(
-              child: Row(
-                children: <Widget>[
-                  _ToolBar(controller: controller),
-                  Expanded(
-                    child: Column(
-                      children: <Widget>[
-                        Expanded(
-                          child: ColoredBox(
-                            color: const Color(0xFF222538),
-                            child: Padding(
-                              padding: const EdgeInsets.all(28),
-                              child: DrawingCanvas(controller: controller),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 1100;
+                  return Row(
+                    children: <Widget>[
+                      _ToolBar(controller: controller),
+                      Expanded(
+                        child: Column(
+                          children: <Widget>[
+                            Expanded(
+                              child: ColoredBox(
+                                color: const Color(0xFF222538),
+                                child: Padding(
+                                  padding: EdgeInsets.all(compact ? 10 : 28),
+                                  child: DrawingCanvas(controller: controller),
+                                ),
+                              ),
                             ),
-                          ),
+                            _Timeline(controller: controller, compact: compact),
+                          ],
                         ),
-                        _Timeline(controller: controller),
-                      ],
-                    ),
-                  ),
-                  _PropertiesPanel(controller: controller),
-                ],
+                      ),
+                      if (!compact) _PropertiesPanel(controller: controller),
+                    ],
+                  );
+                },
               ),
             ),
             _StatusBar(controller: controller),
@@ -67,33 +72,56 @@ class _TopBar extends StatelessWidget {
   final EditorController controller;
 
   @override
-  Widget build(BuildContext context) => Container(
-        height: 62,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: const BoxDecoration(color: VelyntoraColors.surface, border: Border(bottom: BorderSide(color: VelyntoraColors.border))),
-        child: Row(children: <Widget>[
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Volver a proyectos'),
-          const SizedBox(width: 6),
-          Image.asset('assets/branding/velyntora_icon.png', width: 34, height: 34),
-          const SizedBox(width: 10),
-          Text(controller.project.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(width: 18),
-          _SavedBadge(controller: controller),
-          const Spacer(),
-          IconButton(onPressed: controller.undo, icon: const Icon(Icons.undo_rounded), tooltip: 'Deshacer'),
-          const IconButton(onPressed: null, icon: Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: controller.isSaving ? null : () => _save(context),
-            icon: controller.isSaving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.save_outlined),
-            label: Text(controller.isSaving ? 'Guardando' : 'Guardar'),
-          ),
-          const SizedBox(width: 10),
-          FilledButton.icon(onPressed: () => _comingSoon(context, 'La exportación mediante FFmpeg se integrará después del núcleo del editor.'), icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar')),
-        ]),
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 900;
+          return Container(
+            height: 62,
+            padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 14),
+            decoration: const BoxDecoration(color: VelyntoraColors.surface, border: Border(bottom: BorderSide(color: VelyntoraColors.border))),
+            child: Row(children: <Widget>[
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Volver a proyectos'),
+              Image.asset('assets/branding/velyntora_icon.png', width: 32, height: 32),
+              const SizedBox(width: 8),
+              Expanded(child: Text(controller.project.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600))),
+              if (!compact) ...<Widget>[
+                const SizedBox(width: 18),
+                _SavedBadge(controller: controller),
+              ],
+              if (compact) IconButton(onPressed: () => _showMobilePanel(context), icon: const Icon(Icons.layers_rounded), tooltip: 'Pincel y capas'),
+              IconButton(onPressed: controller.undo, icon: const Icon(Icons.undo_rounded), tooltip: 'Deshacer'),
+              const IconButton(onPressed: null, icon: Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
+              if (compact)
+                IconButton(onPressed: controller.isSaving ? null : () => _save(context), icon: const Icon(Icons.save_outlined), tooltip: 'Guardar')
+              else
+                OutlinedButton.icon(
+                  onPressed: controller.isSaving ? null : () => _save(context),
+                  icon: controller.isSaving
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.save_outlined),
+                  label: Text(controller.isSaving ? 'Guardando' : 'Guardar'),
+                ),
+              const SizedBox(width: 6),
+              if (compact)
+                IconButton.filled(onPressed: () => _comingSoon(context, 'La exportación mediante FFmpeg se integrará después del núcleo del editor.'), icon: const Icon(Icons.ios_share_rounded), tooltip: 'Exportar')
+              else
+                FilledButton.icon(onPressed: () => _comingSoon(context, 'La exportación mediante FFmpeg se integrará después del núcleo del editor.'), icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar')),
+            ]),
+          );
+        },
       );
+
+  void _showMobilePanel(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: VelyntoraColors.surface,
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * 0.9,
+        child: _PropertiesPanel(controller: controller),
+      ),
+    );
+  }
 
   void _comingSoon(BuildContext context, String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -261,12 +289,13 @@ class _PropertiesPanel extends StatelessWidget {
 }
 
 class _Timeline extends StatelessWidget {
-  const _Timeline({required this.controller});
+  const _Timeline({required this.controller, required this.compact});
   final EditorController controller;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 172,
+        height: compact ? 132 : 172,
         decoration: const BoxDecoration(color: VelyntoraColors.surface, border: Border(top: BorderSide(color: VelyntoraColors.border))),
         child: Column(children: <Widget>[
           SizedBox(
@@ -281,7 +310,7 @@ class _Timeline extends StatelessWidget {
               const SizedBox(width: 14),
               Text('${controller.project.fps} FPS', style: const TextStyle(color: VelyntoraColors.muted)),
               const Spacer(),
-              TextButton.icon(onPressed: () => controller.addFrame(duplicate: true), icon: const Icon(Icons.copy_rounded), label: const Text('Duplicar')),
+              if (!compact) TextButton.icon(onPressed: () => controller.addFrame(duplicate: true), icon: const Icon(Icons.copy_rounded), label: const Text('Duplicar')),
               const SizedBox(width: 6),
               FilledButton.tonalIcon(onPressed: controller.addFrame, icon: const Icon(Icons.add_rounded), label: const Text('Fotograma')),
               const SizedBox(width: 14),
@@ -300,7 +329,7 @@ class _Timeline extends StatelessWidget {
                   onTap: () => controller.selectFrame(index),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    width: 116,
+                    width: compact ? 86 : 116,
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: selected ? VelyntoraColors.cyan : VelyntoraColors.border, width: selected ? 3 : 1)),
                     child: Stack(children: <Widget>[
                       Center(child: Icon(Icons.draw_outlined, color: Colors.blueGrey.withValues(alpha: 0.3))),
