@@ -89,8 +89,8 @@ class _TopBar extends StatelessWidget {
                 _SavedBadge(controller: controller),
               ],
               if (compact) IconButton(onPressed: () => _showMobilePanel(context), icon: const Icon(Icons.layers_rounded), tooltip: 'Pincel y capas'),
-              IconButton(onPressed: controller.undo, icon: const Icon(Icons.undo_rounded), tooltip: 'Deshacer'),
-              const IconButton(onPressed: null, icon: Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
+              IconButton(onPressed: controller.canUndo ? controller.undo : null, icon: const Icon(Icons.undo_rounded), tooltip: 'Deshacer'),
+              IconButton(onPressed: controller.canRedo ? controller.redo : null, icon: const Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
               if (compact)
                 IconButton(onPressed: controller.isSaving ? null : () => _save(context), icon: const Icon(Icons.save_outlined), tooltip: 'Guardar')
               else
@@ -312,6 +312,11 @@ class _Timeline extends StatelessWidget {
               Text('${controller.project.fps} FPS', style: const TextStyle(color: VelyntoraColors.muted)),
               const Spacer(),
               if (!compact) TextButton.icon(onPressed: () => controller.addFrame(duplicate: true), icon: const Icon(Icons.copy_rounded), label: const Text('Duplicar')),
+              IconButton(
+                onPressed: () => _deleteFrame(context),
+                icon: const Icon(Icons.delete_outline_rounded),
+                tooltip: 'Eliminar fotograma',
+              ),
               const SizedBox(width: 6),
               FilledButton.tonalIcon(onPressed: controller.addFrame, icon: const Icon(Icons.add_rounded), label: const Text('Fotograma')),
               const SizedBox(width: 14),
@@ -343,6 +348,14 @@ class _Timeline extends StatelessWidget {
           ),
         ]),
       );
+
+  void _deleteFrame(BuildContext context) {
+    if (!controller.deleteFrame()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El proyecto debe conservar al menos un fotograma.')),
+      );
+    }
+  }
 }
 
 class _StatusBar extends StatelessWidget {

@@ -23,9 +23,14 @@ class EditorController extends ChangeNotifier {
   bool hasUnsavedChanges = false;
   String? lastSavedPath;
   Timer? _playbackTimer;
+  final Map<String, List<DrawingStroke>> _redoStrokes =
+      <String, List<DrawingStroke>>{};
 
   AnimationLayer get layer => project.layers[activeLayer];
   List<DrawingStroke> get strokes => layer.strokesAt(activeFrame);
+  String get _historyKey => '$activeLayer:$activeFrame';
+  bool get canUndo => strokes.isNotEmpty;
+  bool get canRedo => _redoStrokes[_historyKey]?.isNotEmpty ?? false;
 
   void selectTool(DrawingTool next) {
     tool = next;
@@ -52,6 +57,7 @@ class EditorController extends ChangeNotifier {
       width: brushSize,
       erase: tool == DrawingTool.eraser,
     ));
+    _redoStrokes.remove(_historyKey);
     hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -64,14 +70,24 @@ class EditorController extends ChangeNotifier {
 
   void undo() {
     if (strokes.isNotEmpty) {
-      strokes.removeLast();
+      (_redoStrokes[_historyKey] ??= <DrawingStroke>[])
+          .add(strokes.removeLast());
       hasUnsavedChanges = true;
       notifyListeners();
     }
   }
 
+  void redo() {
+    final history = _redoStrokes[_historyKey];
+    if (history == null || history.isEmpty) return;
+    strokes.add(history.removeLast());
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
   void clearFrame() {
     strokes.clear();
+    _redoStrokes.remove(_historyKey);
     hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -109,6 +125,28 @@ class EditorController extends ChangeNotifier {
     activeFrame = insertAt;
     hasUnsavedChanges = true;
     notifyListeners();
+  }
+
+  bool deleteFrame() {
+    if (project.frameCount <= 1) return false;
+    final removedFrame = activeFrame;
+    for (final item in project.layers) {
+      item.frames.remove(removedFrame);
+      final shiftedFrames = <int, List<DrawingStroke>>{};
+      for (final entry in item.frames.entries) {
+        shiftedFrames[entry.key > removedFrame ? entry.key - 1 : entry.key] =
+            entry.value;
+      }
+      item.frames
+        ..clear()
+        ..addAll(shiftedFrames);
+    }
+    project.frameCount--;
+    activeFrame = activeFrame.clamp(0, project.frameCount - 1);
+    _redoStrokes.clear();
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
   }
 
   void addLayer() {
