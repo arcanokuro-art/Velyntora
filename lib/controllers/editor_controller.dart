@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/animation_models.dart';
+import '../services/project_storage.dart';
 
 class EditorController extends ChangeNotifier {
-  EditorController(this.project);
+  EditorController(this.project, {ProjectStorage? storage})
+      : storage = storage ?? const ProjectStorage();
 
   final AnimationProject project;
+  final ProjectStorage storage;
   DrawingTool tool = DrawingTool.brush;
   Color color = const Color(0xFF17192B);
   double brushSize = 10;
@@ -16,6 +19,9 @@ class EditorController extends ChangeNotifier {
   bool onionSkin = true;
   bool gridEnabled = false;
   bool isPlaying = false;
+  bool isSaving = false;
+  bool hasUnsavedChanges = false;
+  String? lastSavedPath;
   Timer? _playbackTimer;
 
   AnimationLayer get layer => project.layers[activeLayer];
@@ -46,6 +52,7 @@ class EditorController extends ChangeNotifier {
       width: brushSize,
       erase: tool == DrawingTool.eraser,
     ));
+    hasUnsavedChanges = true;
     notifyListeners();
   }
 
@@ -58,12 +65,14 @@ class EditorController extends ChangeNotifier {
   void undo() {
     if (strokes.isNotEmpty) {
       strokes.removeLast();
+      hasUnsavedChanges = true;
       notifyListeners();
     }
   }
 
   void clearFrame() {
     strokes.clear();
+    hasUnsavedChanges = true;
     notifyListeners();
   }
 
@@ -98,12 +107,14 @@ class EditorController extends ChangeNotifier {
     }
     project.frameCount++;
     activeFrame = insertAt;
+    hasUnsavedChanges = true;
     notifyListeners();
   }
 
   void addLayer() {
     project.layers.insert(0, AnimationLayer(name: 'Capa ${project.layers.length + 1}'));
     activeLayer = 0;
+    hasUnsavedChanges = true;
     notifyListeners();
   }
 
@@ -114,11 +125,13 @@ class EditorController extends ChangeNotifier {
 
   void toggleLayerVisibility(int index) {
     project.layers[index].visible = !project.layers[index].visible;
+    hasUnsavedChanges = true;
     notifyListeners();
   }
 
   void toggleLayerLock(int index) {
     project.layers[index].locked = !project.layers[index].locked;
+    hasUnsavedChanges = true;
     notifyListeners();
   }
 
@@ -137,6 +150,21 @@ class EditorController extends ChangeNotifier {
       );
     }
     notifyListeners();
+  }
+
+  Future<String> saveProject() async {
+    if (isSaving) return lastSavedPath ?? '';
+    isSaving = true;
+    notifyListeners();
+    try {
+      final file = await storage.save(project);
+      lastSavedPath = file.path;
+      hasUnsavedChanges = false;
+      return file.path;
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
   }
 
   @override

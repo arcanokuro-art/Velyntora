@@ -78,12 +78,18 @@ class _TopBar extends StatelessWidget {
           const SizedBox(width: 10),
           Text(controller.project.name, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(width: 18),
-          const _SavedBadge(),
+          _SavedBadge(controller: controller),
           const Spacer(),
           IconButton(onPressed: controller.undo, icon: const Icon(Icons.undo_rounded), tooltip: 'Deshacer'),
           IconButton(onPressed: null, icon: const Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
           const SizedBox(width: 8),
-          OutlinedButton.icon(onPressed: () => _comingSoon(context, 'El guardado de archivos .vely se añadirá en la siguiente etapa.'), icon: const Icon(Icons.save_outlined), label: const Text('Guardar')),
+          OutlinedButton.icon(
+            onPressed: controller.isSaving ? null : () => _save(context),
+            icon: controller.isSaving
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.save_outlined),
+            label: Text(controller.isSaving ? 'Guardando' : 'Guardar'),
+          ),
           const SizedBox(width: 10),
           FilledButton.icon(onPressed: () => _comingSoon(context, 'La exportación mediante FFmpeg se integrará después del núcleo del editor.'), icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar')),
         ]),
@@ -92,15 +98,37 @@ class _TopBar extends StatelessWidget {
   void _comingSoon(BuildContext context, String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
+
+  Future<void> _save(BuildContext context) async {
+    try {
+      final path = await controller.saveProject();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Proyecto guardado en $path')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar: $error')),
+        );
+      }
+    }
+  }
 }
 
 class _SavedBadge extends StatelessWidget {
-  const _SavedBadge();
+  const _SavedBadge({required this.controller});
+  final EditorController controller;
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-        child: const Row(children: <Widget>[Icon(Icons.cloud_done_rounded, size: 15, color: Colors.greenAccent), SizedBox(width: 5), Text('Sesión local', style: TextStyle(fontSize: 12, color: Colors.greenAccent))]),
+        child: Row(children: <Widget>[
+          Icon(controller.hasUnsavedChanges ? Icons.edit_rounded : Icons.check_circle_rounded, size: 15, color: controller.hasUnsavedChanges ? Colors.amberAccent : Colors.greenAccent),
+          const SizedBox(width: 5),
+          Text(controller.hasUnsavedChanges ? 'Cambios sin guardar' : 'Guardado', style: TextStyle(fontSize: 12, color: controller.hasUnsavedChanges ? Colors.amberAccent : Colors.greenAccent)),
+        ]),
       );
 }
 

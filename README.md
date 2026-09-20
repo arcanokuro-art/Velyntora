@@ -14,6 +14,7 @@ Velyntora es un editor original de animación 2D para escritorio. Busca conserva
 - Papel cebolla.
 - Cuadrícula.
 - Deshacer el último trazo.
+- Guardado local de proyectos `.vely`.
 - Identidad visual e icono de Velyntora.
 
 ## Ejecutar
@@ -30,7 +31,7 @@ En Linux sustituye `windows` por `linux`; en macOS usa `macos`.
 
 ## Próximos hitos
 
-1. Guardado local en formato `.vely`.
+1. Galería cargada desde proyectos `.vely` existentes.
 2. Miniaturas reales en la línea de tiempo.
 3. Selección, transformación, relleno y texto.
 4. Importación de imágenes, audio y video.
@@ -39,4 +40,4 @@ En Linux sustituye `windows` por `linux`; en macOS usa `macos`.
 
 ## Estado
 
-Versión `0.1.0`: prototipo funcional inicial. El guardado en disco y la exportación todavía aparecen como funciones en preparación.
+Versión `0.1.0`: prototipo funcional inicial. El guardado local ya funciona; la exportación todavía aparece como función en preparación.

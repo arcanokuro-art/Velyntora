@@ -1,0 +1,42 @@
+name: Compilar Velyntora para Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Crear soporte de Windows
+        run: flutter create . --platforms=windows --project-name=velyntora --org=art.arcanokuro
+
+      - name: Descargar dependencias
+        run: flutter pub get
+
+      - name: Analizar código
+        run: flutter analyze
+
+      - name: Ejecutar pruebas
+        run: flutter test
+
+      - name: Compilar aplicación
+        run: flutter build windows --release
+
+      - name: Publicar ejecutable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Velyntora-Windows-v0.1.0
+          path: build/windows/x64/runner/Release/
+          if-no-files-found: error
+          retention-days: 30

@@ -17,4 +17,13 @@ void main() {
     expect(controller.project.layers.length, 2);
     expect(controller.activeLayer, 0);
   });
+
+  test('serializa y recupera un proyecto', () {
+    final project = AnimationProject(name: 'Prueba de formato');
+    project.frameCount = 18;
+    final restored = AnimationProject.fromJson(project.toJson());
+    expect(restored.name, project.name);
+    expect(restored.frameCount, 18);
+    expect(restored.layers.length, 1);
+  });
 }
