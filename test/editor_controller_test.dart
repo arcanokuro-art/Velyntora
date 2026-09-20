@@ -129,4 +129,54 @@ void main() {
     controller.resetZoom();
     expect(controller.zoom, 1);
   });
+
+  test('rellena el fotograma activo y permite deshacer y rehacer', () {
+    final controller = EditorController(AnimationProject(name: 'Relleno'));
+    controller.selectTool(DrawingTool.fill);
+    controller.setColor(const Color(0xFF7357FF));
+    controller.selectTool(DrawingTool.fill);
+    controller.beginStroke(const Offset(0.5, 0.5));
+
+    expect(controller.layer.fills[0], const Color(0xFF7357FF));
+    controller.undo();
+    expect(controller.layer.fills[0], isNull);
+    controller.redo();
+    expect(controller.layer.fills[0], const Color(0xFF7357FF));
+  });
+
+  test('duplica y serializa el relleno del fotograma', () {
+    final controller = EditorController(AnimationProject(name: 'Relleno'));
+    controller.selectTool(DrawingTool.fill);
+    controller.fillFrame();
+    controller.addFrame(duplicate: true);
+
+    expect(controller.layer.fills[1], controller.color);
+    final restored = AnimationProject.fromJson(controller.project.toJson());
+    expect(restored.layers.single.fills[1], controller.color);
+    expect(restored.toJson()['version'], 2);
+  });
+
+  test('mantiene compatibilidad con proyectos sin rellenos', () {
+    final project = AnimationProject(name: 'Anterior');
+    final json = project.toJson();
+    final layers = json['layers'] as List<Map<String, Object>>;
+    layers.single.remove('fills');
+
+    final restored = AnimationProject.fromJson(json);
+    expect(restored.layers.single.fills, isEmpty);
+  });
+
+  test('limpiar fotograma elimina trazos y relleno con deshacer', () {
+    final controller = EditorController(AnimationProject(name: 'Limpiar'));
+    controller.beginStroke(const Offset(0.1, 0.1));
+    controller.selectTool(DrawingTool.fill);
+    controller.fillFrame();
+    controller.clearFrame();
+
+    expect(controller.strokes, isEmpty);
+    expect(controller.layer.fills[0], isNull);
+    controller.undo();
+    expect(controller.strokes, hasLength(1));
+    expect(controller.layer.fills[0], controller.color);
+  });
 }

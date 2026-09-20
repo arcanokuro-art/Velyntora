@@ -129,6 +129,16 @@ class AnimationCanvasPainter extends CustomPainter {
   void _paintFrame(Canvas canvas, Size size, int frame, {double opacity = 1}) {
     for (final layer in controller.project.layers.reversed) {
       if (!layer.visible) continue;
+      final fill = layer.fills[frame];
+      if (fill != null) {
+        canvas.drawRect(
+          Offset.zero & size,
+          Paint()
+            ..color = fill.withValues(
+              alpha: fill.a * layer.opacity * opacity,
+            ),
+        );
+      }
       final strokes = layer.frames[frame] ?? const <DrawingStroke>[];
       for (final stroke in strokes) {
         if (stroke.points.isEmpty) continue;

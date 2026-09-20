@@ -52,6 +52,7 @@ class AnimationLayer {
   bool locked = false;
   double opacity = 1;
   final Map<int, List<DrawingStroke>> frames = <int, List<DrawingStroke>>{};
+  final Map<int, Color> fills = <int, Color>{};
 
   List<DrawingStroke> strokesAt(int frame) =>
       frames.putIfAbsent(frame, () => <DrawingStroke>[]);
@@ -61,6 +62,9 @@ class AnimationLayer {
         'visible': visible,
         'locked': locked,
         'opacity': opacity,
+        'fills': fills.map(
+          (frame, color) => MapEntry(frame.toString(), color.toARGB32()),
+        ),
         'frames': frames.map(
           (frame, strokes) => MapEntry(
             frame.toString(),
@@ -79,6 +83,12 @@ class AnimationLayer {
       layer.frames[int.parse(entry.key)] = (entry.value as List<dynamic>)
           .map((stroke) => DrawingStroke.fromJson(stroke as Map<String, dynamic>))
           .toList();
+    }
+    final savedFills = json['fills'] as Map<String, dynamic>?;
+    if (savedFills != null) {
+      for (final entry in savedFills.entries) {
+        layer.fills[int.parse(entry.key)] = Color(entry.value as int);
+      }
     }
     return layer;
   }
@@ -101,7 +111,7 @@ class AnimationProject {
 
   Map<String, Object> toJson() => <String, Object>{
         'format': 'velyntora-project',
-        'version': 1,
+        'version': 2,
         'name': name,
         'width': width,
         'height': height,

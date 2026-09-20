@@ -24,14 +24,13 @@ class EditorController extends ChangeNotifier {
   bool hasUnsavedChanges = false;
   String? lastSavedPath;
   Timer? _playbackTimer;
-  final Map<String, List<DrawingStroke>> _redoStrokes =
-      <String, List<DrawingStroke>>{};
+  final List<_EditAction> _undoHistory = <_EditAction>[];
+  final List<_EditAction> _redoHistory = <_EditAction>[];
 
   AnimationLayer get layer => project.layers[activeLayer];
   List<DrawingStroke> get strokes => layer.strokesAt(activeFrame);
-  String get _historyKey => '$activeLayer:$activeFrame';
-  bool get canUndo => strokes.isNotEmpty;
-  bool get canRedo => _redoStrokes[_historyKey]?.isNotEmpty ?? false;
+  bool get canUndo => _undoHistory.isNotEmpty;
+  bool get canRedo => _redoHistory.isNotEmpty;
 
   void selectTool(DrawingTool next) {
     tool = next;
@@ -40,7 +39,7 @@ class EditorController extends ChangeNotifier {
 
   void setColor(Color next) {
     color = next;
-    tool = DrawingTool.brush;
+    if (tool != DrawingTool.fill) tool = DrawingTool.brush;
     notifyListeners();
   }
 
@@ -60,14 +59,19 @@ class EditorController extends ChangeNotifier {
 
   void beginStroke(Offset point) {
     if (layer.locked || !layer.visible) return;
+    if (tool == DrawingTool.fill) {
+      fillFrame();
+      return;
+    }
     if (tool != DrawingTool.brush && tool != DrawingTool.eraser) return;
-    strokes.add(DrawingStroke(
+    final stroke = DrawingStroke(
       points: <Offset>[point],
       color: color,
       width: brushSize,
       erase: tool == DrawingTool.eraser,
-    ));
-    _redoStrokes.remove(_historyKey);
+    );
+    strokes.add(stroke);
+    _recordAction(_StrokeAction(strokes, stroke));
     hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -79,27 +83,59 @@ class EditorController extends ChangeNotifier {
   }
 
   void undo() {
-    if (strokes.isNotEmpty) {
-      (_redoStrokes[_historyKey] ??= <DrawingStroke>[])
-          .add(strokes.removeLast());
-      hasUnsavedChanges = true;
-      notifyListeners();
-    }
+    if (_undoHistory.isEmpty) return;
+    final action = _undoHistory.removeLast();
+    action.undo();
+    _redoHistory.add(action);
+    hasUnsavedChanges = true;
+    notifyListeners();
   }
 
   void redo() {
-    final history = _redoStrokes[_historyKey];
-    if (history == null || history.isEmpty) return;
-    strokes.add(history.removeLast());
+    if (_redoHistory.isEmpty) return;
+    final action = _redoHistory.removeLast();
+    action.redo();
+    _undoHistory.add(action);
     hasUnsavedChanges = true;
     notifyListeners();
   }
 
   void clearFrame() {
+    final previousFill = layer.fills[activeFrame];
+    if (strokes.isEmpty && previousFill == null) return;
+    final previous = List<DrawingStroke>.from(strokes);
     strokes.clear();
-    _redoStrokes.remove(_historyKey);
+    layer.fills.remove(activeFrame);
+    _recordAction(
+      _ClearFrameAction(
+        strokes,
+        layer,
+        activeFrame,
+        previous,
+        previousFill,
+      ),
+    );
     hasUnsavedChanges = true;
     notifyListeners();
+  }
+
+  void fillFrame() {
+    final previous = layer.fills[activeFrame];
+    if (previous == color) return;
+    layer.fills[activeFrame] = color;
+    _recordAction(_FillAction(layer, activeFrame, previous, color));
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  void _recordAction(_EditAction action) {
+    _undoHistory.add(action);
+    _redoHistory.clear();
+  }
+
+  void _clearHistory() {
+    _undoHistory.clear();
+    _redoHistory.clear();
   }
 
   void selectFrame(int index) {
@@ -123,16 +159,21 @@ class EditorController extends ChangeNotifier {
       for (var index = project.frameCount - 1; index >= insertAt; index--) {
         final existing = item.frames.remove(index);
         if (existing != null) item.frames[index + 1] = existing;
+        final existingFill = item.fills.remove(index);
+        if (existingFill != null) item.fills[index + 1] = existingFill;
       }
       if (duplicate) {
         item.frames[insertAt] = item
             .strokesAt(activeFrame)
             .map((stroke) => stroke.copy())
             .toList();
+        final fill = item.fills[activeFrame];
+        if (fill != null) item.fills[insertAt] = fill;
       }
     }
     project.frameCount++;
     activeFrame = insertAt;
+    _clearHistory();
     hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -142,6 +183,7 @@ class EditorController extends ChangeNotifier {
     final removedFrame = activeFrame;
     for (final item in project.layers) {
       item.frames.remove(removedFrame);
+      item.fills.remove(removedFrame);
       final shiftedFrames = <int, List<DrawingStroke>>{};
       for (final entry in item.frames.entries) {
         shiftedFrames[entry.key > removedFrame ? entry.key - 1 : entry.key] =
@@ -150,10 +192,18 @@ class EditorController extends ChangeNotifier {
       item.frames
         ..clear()
         ..addAll(shiftedFrames);
+      final shiftedFills = <int, Color>{};
+      for (final entry in item.fills.entries) {
+        shiftedFills[entry.key > removedFrame ? entry.key - 1 : entry.key] =
+            entry.value;
+      }
+      item.fills
+        ..clear()
+        ..addAll(shiftedFills);
     }
     project.frameCount--;
     activeFrame = activeFrame.clamp(0, project.frameCount - 1);
-    _redoStrokes.clear();
+    _clearHistory();
     hasUnsavedChanges = true;
     notifyListeners();
     return true;
@@ -162,6 +212,7 @@ class EditorController extends ChangeNotifier {
   void addLayer() {
     project.layers.insert(0, AnimationLayer(name: 'Capa ${project.layers.length + 1}'));
     activeLayer = 0;
+    _clearHistory();
     hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -190,7 +241,7 @@ class EditorController extends ChangeNotifier {
     final selectedLayer = project.layers.removeAt(activeLayer);
     activeLayer--;
     project.layers.insert(activeLayer, selectedLayer);
-    _redoStrokes.clear();
+    _clearHistory();
     hasUnsavedChanges = true;
     notifyListeners();
     return true;
@@ -201,7 +252,7 @@ class EditorController extends ChangeNotifier {
     final selectedLayer = project.layers.removeAt(activeLayer);
     activeLayer++;
     project.layers.insert(activeLayer, selectedLayer);
-    _redoStrokes.clear();
+    _clearHistory();
     hasUnsavedChanges = true;
     notifyListeners();
     return true;
@@ -211,7 +262,7 @@ class EditorController extends ChangeNotifier {
     if (project.layers.length <= 1) return false;
     project.layers.removeAt(activeLayer);
     activeLayer = activeLayer.clamp(0, project.layers.length - 1);
-    _redoStrokes.clear();
+    _clearHistory();
     hasUnsavedChanges = true;
     notifyListeners();
     return true;
@@ -266,4 +317,71 @@ class EditorController extends ChangeNotifier {
     _playbackTimer?.cancel();
     super.dispose();
   }
+}
+
+abstract class _EditAction {
+  void undo();
+  void redo();
+}
+
+class _StrokeAction implements _EditAction {
+  _StrokeAction(this.target, this.stroke);
+
+  final List<DrawingStroke> target;
+  final DrawingStroke stroke;
+
+  @override
+  void undo() => target.remove(stroke);
+
+  @override
+  void redo() => target.add(stroke);
+}
+
+class _ClearFrameAction implements _EditAction {
+  _ClearFrameAction(
+    this.target,
+    this.layer,
+    this.frame,
+    this.previous,
+    this.previousFill,
+  );
+
+  final List<DrawingStroke> target;
+  final AnimationLayer layer;
+  final int frame;
+  final List<DrawingStroke> previous;
+  final Color? previousFill;
+
+  @override
+  void undo() {
+    target.addAll(previous);
+    if (previousFill != null) layer.fills[frame] = previousFill!;
+  }
+
+  @override
+  void redo() {
+    target.clear();
+    layer.fills.remove(frame);
+  }
+}
+
+class _FillAction implements _EditAction {
+  _FillAction(this.layer, this.frame, this.previous, this.next);
+
+  final AnimationLayer layer;
+  final int frame;
+  final Color? previous;
+  final Color next;
+
+  @override
+  void undo() {
+    if (previous == null) {
+      layer.fills.remove(frame);
+    } else {
+      layer.fills[frame] = previous!;
+    }
+  }
+
+  @override
+  void redo() => layer.fills[frame] = next;
 }
