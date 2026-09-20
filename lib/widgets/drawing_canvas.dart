@@ -3,10 +3,41 @@ import 'package:flutter/material.dart';
 import '../controllers/editor_controller.dart';
 import '../models/animation_models.dart';
 
-class DrawingCanvas extends StatelessWidget {
+class DrawingCanvas extends StatefulWidget {
   const DrawingCanvas({super.key, required this.controller});
 
   final EditorController controller;
+
+  @override
+  State<DrawingCanvas> createState() => _DrawingCanvasState();
+}
+
+class _DrawingCanvasState extends State<DrawingCanvas> {
+  final TransformationController _transformation = TransformationController();
+
+  EditorController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _transformation.addListener(_reportZoom);
+  }
+
+  @override
+  void dispose() {
+    _transformation
+      ..removeListener(_reportZoom)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _reportZoom() =>
+      controller.setZoom(_transformation.value.getMaxScaleOnAxis());
+
+  void _resetView() {
+    _transformation.value = Matrix4.identity();
+    controller.resetZoom();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,29 +50,51 @@ class DrawingCanvas extends StatelessWidget {
           height = constraints.maxHeight;
           width = height * ratio;
         }
-        return Center(
-          child: Container(
-            width: width,
-            height: height,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(3),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(color: Colors.black54, blurRadius: 28),
-              ],
-            ),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanStart: (details) => controller.beginStroke(
-                _normalize(details.localPosition, Size(width, height)),
-              ),
-              onPanUpdate: (details) => controller.extendStroke(
-                _normalize(details.localPosition, Size(width, height)),
-              ),
-              child: CustomPaint(
-                painter: AnimationCanvasPainter(controller),
-                size: Size(width, height),
+        final movingCanvas = controller.tool == DrawingTool.hand;
+        return GestureDetector(
+          onDoubleTap: movingCanvas ? _resetView : null,
+          child: InteractiveViewer(
+            transformationController: _transformation,
+            minScale: 0.25,
+            maxScale: 8,
+            panEnabled: movingCanvas,
+            scaleEnabled: movingCanvas,
+            boundaryMargin: const EdgeInsets.all(600),
+            child: Center(
+              child: Container(
+                width: width,
+                height: height,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(color: Colors.black54, blurRadius: 28),
+                  ],
+                ),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanStart: movingCanvas
+                      ? null
+                      : (details) => controller.beginStroke(
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                          ),
+                  onPanUpdate: movingCanvas
+                      ? null
+                      : (details) => controller.extendStroke(
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                          ),
+                  child: CustomPaint(
+                    painter: AnimationCanvasPainter(controller),
+                    size: Size(width, height),
+                  ),
+                ),
               ),
             ),
           ),

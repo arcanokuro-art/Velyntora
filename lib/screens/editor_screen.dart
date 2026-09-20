@@ -422,7 +422,7 @@ class _StatusBar extends StatelessWidget {
           const SizedBox(width: 18),
           Text('${controller.project.layers.length} capa(s)', style: const TextStyle(fontSize: 11, color: VelyntoraColors.muted)),
           const Spacer(),
-          const Text('Zoom 100%', style: TextStyle(fontSize: 11, color: VelyntoraColors.muted)),
+          Text('Zoom ${(controller.zoom * 100).round()}%', style: const TextStyle(fontSize: 11, color: VelyntoraColors.muted)),
         ]),
       );
 }

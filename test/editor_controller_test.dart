@@ -113,4 +113,20 @@ void main() {
     expect(controller.project.layers, hasLength(1));
     expect(controller.deleteActiveLayer(), isFalse);
   });
+
+  test('limita el zoom al intervalo permitido', () {
+    final controller = EditorController(AnimationProject(name: 'Zoom'));
+    controller.setZoom(20);
+    expect(controller.zoom, 8);
+
+    controller.setZoom(0.01);
+    expect(controller.zoom, 0.25);
+  });
+
+  test('restablece el zoom al cien por ciento', () {
+    final controller = EditorController(AnimationProject(name: 'Zoom'));
+    controller.setZoom(3.5);
+    controller.resetZoom();
+    expect(controller.zoom, 1);
+  });
 }

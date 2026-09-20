@@ -14,6 +14,7 @@ class EditorController extends ChangeNotifier {
   DrawingTool tool = DrawingTool.brush;
   Color color = const Color(0xFF17192B);
   double brushSize = 10;
+  double zoom = 1;
   int activeFrame = 0;
   int activeLayer = 0;
   bool onionSkin = true;
@@ -47,6 +48,15 @@ class EditorController extends ChangeNotifier {
     brushSize = next;
     notifyListeners();
   }
+
+  void setZoom(double next) {
+    final safeZoom = next.clamp(0.25, 8.0);
+    if (zoom == safeZoom) return;
+    zoom = safeZoom;
+    notifyListeners();
+  }
+
+  void resetZoom() => setZoom(1);
 
   void beginStroke(Offset point) {
     if (layer.locked || !layer.visible) return;
