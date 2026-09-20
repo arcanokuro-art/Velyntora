@@ -39,6 +39,35 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
     controller.resetZoom();
   }
 
+  Future<void> _addText(BuildContext context, Offset position) async {
+    final textController = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Añadir texto'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          maxLines: 3,
+          maxLength: 160,
+          decoration: const InputDecoration(hintText: 'Escribe el texto'),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, textController.text),
+            child: const Text('Añadir'),
+          ),
+        ],
+      ),
+    );
+    textController.dispose();
+    if (value != null) controller.addText(value, position);
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -74,6 +103,15 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
                 ),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
+                  onTapDown: controller.tool == DrawingTool.text
+                      ? (details) => _addText(
+                            context,
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                          )
+                      : null,
                   onPanStart: movingCanvas
                       ? null
                       : (details) => controller.beginStroke(
@@ -163,6 +201,23 @@ class AnimationCanvasPainter extends CustomPainter {
         } else {
           canvas.drawPath(path, paint);
         }
+      }
+      final texts = layer.texts[frame] ?? const <DrawingText>[];
+      for (final item in texts) {
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: item.text,
+            style: TextStyle(
+              color: item.color.withValues(
+                alpha: item.color.a * layer.opacity * opacity,
+              ),
+              fontSize: item.fontSize,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: size.width * (1 - item.position.dx));
+        textPainter.paint(canvas, _scale(item.position, size));
       }
     }
   }

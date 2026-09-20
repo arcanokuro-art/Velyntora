@@ -181,4 +181,48 @@ void main() {
     expect(controller.strokes, hasLength(1));
     expect(controller.layer.fills[0], controller.color);
   });
+
+  test('agrega texto y permite deshacer y rehacer', () {
+    final controller = EditorController(AnimationProject(name: 'Texto'));
+    controller.addText('Hola Velyntora', const Offset(0.25, 0.4));
+
+    expect(controller.texts.single.text, 'Hola Velyntora');
+    expect(controller.texts.single.position, const Offset(0.25, 0.4));
+    controller.undo();
+    expect(controller.texts, isEmpty);
+    controller.redo();
+    expect(controller.texts.single.text, 'Hola Velyntora');
+  });
+
+  test('duplica y serializa textos del fotograma', () {
+    final controller = EditorController(AnimationProject(name: 'Texto'));
+    controller.addText('Titulo', const Offset(0.1, 0.2));
+    controller.addFrame(duplicate: true);
+
+    expect(controller.texts.single.text, 'Titulo');
+    final restored = AnimationProject.fromJson(controller.project.toJson());
+    expect(restored.layers.single.texts[1]?.single.text, 'Titulo');
+  });
+
+  test('elimina un fotograma y recorre sus textos', () {
+    final controller = EditorController(AnimationProject(name: 'Texto'));
+    controller.selectFrame(1);
+    controller.addText('Eliminar', const Offset(0.1, 0.1));
+    controller.selectFrame(2);
+    controller.addText('Conservar', const Offset(0.2, 0.2));
+    controller.selectFrame(1);
+
+    controller.deleteFrame();
+    expect(controller.layer.texts[1]?.single.text, 'Conservar');
+  });
+
+  test('limpiar fotograma elimina y recupera textos', () {
+    final controller = EditorController(AnimationProject(name: 'Texto'));
+    controller.addText('Recuperar', const Offset(0.3, 0.3));
+    controller.clearFrame();
+    expect(controller.texts, isEmpty);
+
+    controller.undo();
+    expect(controller.texts.single.text, 'Recuperar');
+  });
 }

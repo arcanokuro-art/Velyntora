@@ -29,6 +29,7 @@ class EditorController extends ChangeNotifier {
 
   AnimationLayer get layer => project.layers[activeLayer];
   List<DrawingStroke> get strokes => layer.strokesAt(activeFrame);
+  List<DrawingText> get texts => layer.textsAt(activeFrame);
   bool get canUndo => _undoHistory.isNotEmpty;
   bool get canRedo => _redoHistory.isNotEmpty;
 
@@ -39,7 +40,9 @@ class EditorController extends ChangeNotifier {
 
   void setColor(Color next) {
     color = next;
-    if (tool != DrawingTool.fill) tool = DrawingTool.brush;
+    if (tool != DrawingTool.fill && tool != DrawingTool.text) {
+      tool = DrawingTool.brush;
+    }
     notifyListeners();
   }
 
@@ -102,9 +105,11 @@ class EditorController extends ChangeNotifier {
 
   void clearFrame() {
     final previousFill = layer.fills[activeFrame];
-    if (strokes.isEmpty && previousFill == null) return;
+    if (strokes.isEmpty && texts.isEmpty && previousFill == null) return;
     final previous = List<DrawingStroke>.from(strokes);
+    final previousTexts = List<DrawingText>.from(texts);
     strokes.clear();
+    texts.clear();
     layer.fills.remove(activeFrame);
     _recordAction(
       _ClearFrameAction(
@@ -112,6 +117,7 @@ class EditorController extends ChangeNotifier {
         layer,
         activeFrame,
         previous,
+        previousTexts,
         previousFill,
       ),
     );
@@ -124,6 +130,21 @@ class EditorController extends ChangeNotifier {
     if (previous == color) return;
     layer.fills[activeFrame] = color;
     _recordAction(_FillAction(layer, activeFrame, previous, color));
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  void addText(String value, Offset position) {
+    final trimmedText = value.trim();
+    if (trimmedText.isEmpty || layer.locked || !layer.visible) return;
+    final item = DrawingText(
+      text: trimmedText,
+      position: position,
+      color: color,
+      fontSize: (brushSize * 2.4).clamp(16, 96),
+    );
+    texts.add(item);
+    _recordAction(_TextAction(texts, item));
     hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -161,6 +182,8 @@ class EditorController extends ChangeNotifier {
         if (existing != null) item.frames[index + 1] = existing;
         final existingFill = item.fills.remove(index);
         if (existingFill != null) item.fills[index + 1] = existingFill;
+        final existingTexts = item.texts.remove(index);
+        if (existingTexts != null) item.texts[index + 1] = existingTexts;
       }
       if (duplicate) {
         item.frames[insertAt] = item
@@ -169,6 +192,10 @@ class EditorController extends ChangeNotifier {
             .toList();
         final fill = item.fills[activeFrame];
         if (fill != null) item.fills[insertAt] = fill;
+        item.texts[insertAt] = item
+            .textsAt(activeFrame)
+            .map((text) => text.copy())
+            .toList();
       }
     }
     project.frameCount++;
@@ -184,6 +211,7 @@ class EditorController extends ChangeNotifier {
     for (final item in project.layers) {
       item.frames.remove(removedFrame);
       item.fills.remove(removedFrame);
+      item.texts.remove(removedFrame);
       final shiftedFrames = <int, List<DrawingStroke>>{};
       for (final entry in item.frames.entries) {
         shiftedFrames[entry.key > removedFrame ? entry.key - 1 : entry.key] =
@@ -200,6 +228,14 @@ class EditorController extends ChangeNotifier {
       item.fills
         ..clear()
         ..addAll(shiftedFills);
+      final shiftedTexts = <int, List<DrawingText>>{};
+      for (final entry in item.texts.entries) {
+        shiftedTexts[entry.key > removedFrame ? entry.key - 1 : entry.key] =
+            entry.value;
+      }
+      item.texts
+        ..clear()
+        ..addAll(shiftedTexts);
     }
     project.frameCount--;
     activeFrame = activeFrame.clamp(0, project.frameCount - 1);
@@ -337,12 +373,26 @@ class _StrokeAction implements _EditAction {
   void redo() => target.add(stroke);
 }
 
+class _TextAction implements _EditAction {
+  _TextAction(this.target, this.item);
+
+  final List<DrawingText> target;
+  final DrawingText item;
+
+  @override
+  void undo() => target.remove(item);
+
+  @override
+  void redo() => target.add(item);
+}
+
 class _ClearFrameAction implements _EditAction {
   _ClearFrameAction(
     this.target,
     this.layer,
     this.frame,
     this.previous,
+    this.previousTexts,
     this.previousFill,
   );
 
@@ -350,17 +400,20 @@ class _ClearFrameAction implements _EditAction {
   final AnimationLayer layer;
   final int frame;
   final List<DrawingStroke> previous;
+  final List<DrawingText> previousTexts;
   final Color? previousFill;
 
   @override
   void undo() {
     target.addAll(previous);
+    layer.textsAt(frame).addAll(previousTexts);
     if (previousFill != null) layer.fills[frame] = previousFill!;
   }
 
   @override
   void redo() {
     target.clear();
+    layer.textsAt(frame).clear();
     layer.fills.remove(frame);
   }
 }

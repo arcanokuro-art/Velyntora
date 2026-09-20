@@ -44,6 +44,45 @@ class DrawingStroke {
       );
 }
 
+class DrawingText {
+  DrawingText({
+    required this.text,
+    required this.position,
+    required this.color,
+    required this.fontSize,
+  });
+
+  final String text;
+  final Offset position;
+  final Color color;
+  final double fontSize;
+
+  DrawingText copy() => DrawingText(
+        text: text,
+        position: position,
+        color: color,
+        fontSize: fontSize,
+      );
+
+  Map<String, Object> toJson() => <String, Object>{
+        'text': text,
+        'x': position.dx,
+        'y': position.dy,
+        'color': color.toARGB32(),
+        'fontSize': fontSize,
+      };
+
+  factory DrawingText.fromJson(Map<String, dynamic> json) => DrawingText(
+        text: json['text'] as String,
+        position: Offset(
+          (json['x'] as num).toDouble(),
+          (json['y'] as num).toDouble(),
+        ),
+        color: Color(json['color'] as int),
+        fontSize: (json['fontSize'] as num).toDouble(),
+      );
+}
+
 class AnimationLayer {
   AnimationLayer({required this.name});
 
@@ -53,9 +92,13 @@ class AnimationLayer {
   double opacity = 1;
   final Map<int, List<DrawingStroke>> frames = <int, List<DrawingStroke>>{};
   final Map<int, Color> fills = <int, Color>{};
+  final Map<int, List<DrawingText>> texts = <int, List<DrawingText>>{};
 
   List<DrawingStroke> strokesAt(int frame) =>
       frames.putIfAbsent(frame, () => <DrawingStroke>[]);
+
+  List<DrawingText> textsAt(int frame) =>
+      texts.putIfAbsent(frame, () => <DrawingText>[]);
 
   Map<String, Object> toJson() => <String, Object>{
         'name': name,
@@ -64,6 +107,12 @@ class AnimationLayer {
         'opacity': opacity,
         'fills': fills.map(
           (frame, color) => MapEntry(frame.toString(), color.toARGB32()),
+        ),
+        'texts': texts.map(
+          (frame, items) => MapEntry(
+            frame.toString(),
+            items.map((item) => item.toJson()).toList(),
+          ),
         ),
         'frames': frames.map(
           (frame, strokes) => MapEntry(
@@ -88,6 +137,14 @@ class AnimationLayer {
     if (savedFills != null) {
       for (final entry in savedFills.entries) {
         layer.fills[int.parse(entry.key)] = Color(entry.value as int);
+      }
+    }
+    final savedTexts = json['texts'] as Map<String, dynamic>?;
+    if (savedTexts != null) {
+      for (final entry in savedTexts.entries) {
+        layer.texts[int.parse(entry.key)] = (entry.value as List<dynamic>)
+            .map((item) => DrawingText.fromJson(item as Map<String, dynamic>))
+            .toList();
       }
     }
     return layer;
