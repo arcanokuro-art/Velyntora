@@ -175,25 +175,26 @@ class _ToolBar extends StatelessWidget {
       (DrawingTool.hand, Icons.pan_tool_alt_rounded, 'Mover'),
     ];
     return Container(
-      width: 72,
+      width: 60,
       color: VelyntoraColors.surface,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(children: <Widget>[
         for (final item in tools)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: 2),
             child: IconButton.filledTonal(
               onPressed: () => controller.selectTool(item.$1),
               icon: Icon(item.$2),
               tooltip: item.$3,
               style: IconButton.styleFrom(
+                fixedSize: const Size(40, 40),
                 backgroundColor: controller.tool == item.$1 ? VelyntoraColors.violet.withValues(alpha: 0.28) : Colors.transparent,
                 foregroundColor: controller.tool == item.$1 ? VelyntoraColors.cyan : VelyntoraColors.muted,
               ),
             ),
           ),
         const Spacer(),
-        IconButton(onPressed: controller.clearFrame, icon: const Icon(Icons.delete_sweep_outlined), tooltip: 'Limpiar fotograma'),
+        IconButton(onPressed: controller.clearFrame, icon: const Icon(Icons.delete_sweep_outlined), tooltip: 'Limpiar fotograma', style: IconButton.styleFrom(fixedSize: const Size(40, 40))),
       ]),
     );
   }
