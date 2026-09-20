@@ -53,7 +53,7 @@ class DrawingText {
   });
 
   final String text;
-  final Offset position;
+  Offset position;
   final Color color;
   final double fontSize;
 

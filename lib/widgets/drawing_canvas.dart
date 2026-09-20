@@ -111,23 +111,42 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
                               Size(width, height),
                             ),
                           )
-                      : null,
+                      : controller.tool == DrawingTool.select
+                          ? (details) => controller.selectAt(
+                                _normalize(
+                                  details.localPosition,
+                                  Size(width, height),
+                                ),
+                              )
+                          : null,
                   onPanStart: movingCanvas
                       ? null
-                      : (details) => controller.beginStroke(
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
-                            ),
-                          ),
+                      : controller.tool == DrawingTool.select
+                          ? (_) => controller.beginSelectionTransform()
+                          : (details) => controller.beginStroke(
+                                _normalize(
+                                  details.localPosition,
+                                  Size(width, height),
+                                ),
+                              ),
                   onPanUpdate: movingCanvas
                       ? null
-                      : (details) => controller.extendStroke(
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
-                            ),
-                          ),
+                      : controller.tool == DrawingTool.select
+                          ? (details) => controller.moveSelection(
+                                Offset(
+                                  details.delta.dx / width,
+                                  details.delta.dy / height,
+                                ),
+                              )
+                          : (details) => controller.extendStroke(
+                                _normalize(
+                                  details.localPosition,
+                                  Size(width, height),
+                                ),
+                              ),
+                  onPanEnd: controller.tool == DrawingTool.select
+                      ? (_) => controller.finishSelectionTransform()
+                      : null,
                   child: CustomPaint(
                     painter: AnimationCanvasPainter(controller),
                     size: Size(width, height),
@@ -159,6 +178,10 @@ class AnimationCanvasPainter extends CustomPainter {
       _paintFrame(canvas, size, controller.activeFrame - 1, opacity: 0.18);
     }
     _paintFrame(canvas, size, controller.activeFrame);
+
+    if (controller.tool == DrawingTool.select) {
+      _paintSelection(canvas, size);
+    }
 
     if (controller.gridEnabled) _paintGrid(canvas, size);
     canvas.restore();
@@ -234,6 +257,40 @@ class AnimationCanvasPainter extends CustomPainter {
       final y = size.height * i / 5;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
+  }
+
+  void _paintSelection(Canvas canvas, Size size) {
+    Rect? bounds;
+    final stroke = controller.selectedStroke;
+    if (stroke != null && stroke.points.isNotEmpty) {
+      final scaled = stroke.points.map((point) => _scale(point, size)).toList();
+      final xs = scaled.map((point) => point.dx);
+      final ys = scaled.map((point) => point.dy);
+      bounds = Rect.fromLTRB(
+        xs.reduce((a, b) => a < b ? a : b),
+        ys.reduce((a, b) => a < b ? a : b),
+        xs.reduce((a, b) => a > b ? a : b),
+        ys.reduce((a, b) => a > b ? a : b),
+      ).inflate(8);
+    }
+    final text = controller.selectedText;
+    if (text != null) {
+      final origin = _scale(text.position, size);
+      bounds = Rect.fromLTWH(
+        origin.dx,
+        origin.dy,
+        text.fontSize * text.text.length * 0.58,
+        text.fontSize * 1.35,
+      ).inflate(6);
+    }
+    if (bounds == null) return;
+    canvas.drawRect(
+      bounds,
+      Paint()
+        ..color = const Color(0xFF21D4F7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
   }
 
   Offset _scale(Offset point, Size size) =>

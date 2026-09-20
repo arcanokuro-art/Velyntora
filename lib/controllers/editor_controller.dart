@@ -26,6 +26,10 @@ class EditorController extends ChangeNotifier {
   Timer? _playbackTimer;
   final List<_EditAction> _undoHistory = <_EditAction>[];
   final List<_EditAction> _redoHistory = <_EditAction>[];
+  DrawingStroke? selectedStroke;
+  DrawingText? selectedText;
+  List<Offset>? _selectionStartPoints;
+  Offset? _selectionStartTextPosition;
 
   AnimationLayer get layer => project.layers[activeLayer];
   List<DrawingStroke> get strokes => layer.strokesAt(activeFrame);
@@ -35,7 +39,100 @@ class EditorController extends ChangeNotifier {
 
   void selectTool(DrawingTool next) {
     tool = next;
+    if (next != DrawingTool.select) clearSelection(notify: false);
     notifyListeners();
+  }
+
+  bool selectAt(Offset point) {
+    if (layer.locked || !layer.visible) return false;
+    selectedStroke = null;
+    selectedText = null;
+
+    var closestDistance = double.infinity;
+    for (final item in texts.reversed) {
+      final distance = (item.position - point).distanceSquared;
+      if (distance < closestDistance && distance <= 0.02) {
+        closestDistance = distance;
+        selectedText = item;
+      }
+    }
+    if (selectedText == null) {
+      for (final stroke in strokes.reversed) {
+        for (final strokePoint in stroke.points) {
+          final distance = (strokePoint - point).distanceSquared;
+          if (distance < closestDistance && distance <= 0.0064) {
+            closestDistance = distance;
+            selectedStroke = stroke;
+          }
+        }
+      }
+    }
+    notifyListeners();
+    return selectedStroke != null || selectedText != null;
+  }
+
+  void beginSelectionTransform() {
+    _selectionStartPoints = selectedStroke == null
+        ? null
+        : List<Offset>.from(selectedStroke!.points);
+    _selectionStartTextPosition = selectedText?.position;
+  }
+
+  void moveSelection(Offset delta) {
+    if (selectedStroke != null) {
+      for (var index = 0; index < selectedStroke!.points.length; index++) {
+        selectedStroke!.points[index] = _clampPoint(
+          selectedStroke!.points[index] + delta,
+        );
+      }
+    } else if (selectedText != null) {
+      selectedText!.position = _clampPoint(selectedText!.position + delta);
+    } else {
+      return;
+    }
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  void finishSelectionTransform() {
+    if (selectedStroke != null && _selectionStartPoints != null) {
+      final next = List<Offset>.from(selectedStroke!.points);
+      if (!_samePoints(_selectionStartPoints!, next)) {
+        _recordAction(
+          _MoveStrokeAction(selectedStroke!, _selectionStartPoints!, next),
+        );
+      }
+    } else if (selectedText != null && _selectionStartTextPosition != null) {
+      final next = selectedText!.position;
+      if (next != _selectionStartTextPosition) {
+        _recordAction(
+          _MoveTextAction(selectedText!, _selectionStartTextPosition!, next),
+        );
+      }
+    }
+    _selectionStartPoints = null;
+    _selectionStartTextPosition = null;
+  }
+
+  void clearSelection({bool notify = true}) {
+    selectedStroke = null;
+    selectedText = null;
+    _selectionStartPoints = null;
+    _selectionStartTextPosition = null;
+    if (notify) notifyListeners();
+  }
+
+  Offset _clampPoint(Offset point) => Offset(
+        point.dx.clamp(0, 1).toDouble(),
+        point.dy.clamp(0, 1).toDouble(),
+      );
+
+  bool _samePoints(List<Offset> first, List<Offset> second) {
+    if (first.length != second.length) return false;
+    for (var index = 0; index < first.length; index++) {
+      if (first[index] != second[index]) return false;
+    }
+    return true;
   }
 
   void setColor(Color next) {
@@ -157,10 +254,12 @@ class EditorController extends ChangeNotifier {
   void _clearHistory() {
     _undoHistory.clear();
     _redoHistory.clear();
+    clearSelection(notify: false);
   }
 
   void selectFrame(int index) {
     activeFrame = index.clamp(0, project.frameCount - 1);
+    clearSelection(notify: false);
     notifyListeners();
   }
 
@@ -255,6 +354,7 @@ class EditorController extends ChangeNotifier {
 
   void selectLayer(int index) {
     activeLayer = index;
+    clearSelection(notify: false);
     notifyListeners();
   }
 
@@ -384,6 +484,40 @@ class _TextAction implements _EditAction {
 
   @override
   void redo() => target.add(item);
+}
+
+class _MoveStrokeAction implements _EditAction {
+  _MoveStrokeAction(this.stroke, this.previous, this.next);
+
+  final DrawingStroke stroke;
+  final List<Offset> previous;
+  final List<Offset> next;
+
+  void _apply(List<Offset> points) {
+    stroke.points
+      ..clear()
+      ..addAll(points);
+  }
+
+  @override
+  void undo() => _apply(previous);
+
+  @override
+  void redo() => _apply(next);
+}
+
+class _MoveTextAction implements _EditAction {
+  _MoveTextAction(this.item, this.previous, this.next);
+
+  final DrawingText item;
+  final Offset previous;
+  final Offset next;
+
+  @override
+  void undo() => item.position = previous;
+
+  @override
+  void redo() => item.position = next;
 }
 
 class _ClearFrameAction implements _EditAction {

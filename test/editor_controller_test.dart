@@ -225,4 +225,58 @@ void main() {
     controller.undo();
     expect(controller.texts.single.text, 'Recuperar');
   });
+
+  test('selecciona el trazo mas cercano', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.extendStroke(const Offset(0.3, 0.3));
+    final expected = controller.strokes.single;
+    controller.selectTool(DrawingTool.select);
+
+    expect(controller.selectAt(const Offset(0.21, 0.21)), isTrue);
+    expect(controller.selectedStroke, same(expected));
+    expect(controller.selectedText, isNull);
+  });
+
+  test('mueve un trazo seleccionado con deshacer y rehacer', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.2, 0.2));
+    controller.beginSelectionTransform();
+    controller.moveSelection(const Offset(0.1, 0.15));
+    controller.finishSelectionTransform();
+
+    expect(controller.strokes.single.points.single.dx, closeTo(0.3, 0.000001));
+    expect(controller.strokes.single.points.single.dy, closeTo(0.35, 0.000001));
+    controller.undo();
+    expect(controller.strokes.single.points.single, const Offset(0.2, 0.2));
+    controller.redo();
+    expect(controller.strokes.single.points.single.dx, closeTo(0.3, 0.000001));
+    expect(controller.strokes.single.points.single.dy, closeTo(0.35, 0.000001));
+  });
+
+  test('selecciona y mueve texto dentro del lienzo', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.addText('Mover', const Offset(0.9, 0.9));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.9, 0.9));
+    controller.beginSelectionTransform();
+    controller.moveSelection(const Offset(0.4, 0.4));
+    controller.finishSelectionTransform();
+
+    expect(controller.texts.single.position, const Offset(1, 1));
+    controller.undo();
+    expect(controller.texts.single.position, const Offset(0.9, 0.9));
+  });
+
+  test('no selecciona contenido de una capa bloqueada', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.toggleLayerLock(0);
+    controller.selectTool(DrawingTool.select);
+
+    expect(controller.selectAt(const Offset(0.2, 0.2)), isFalse);
+    expect(controller.selectedStroke, isNull);
+  });
 }
