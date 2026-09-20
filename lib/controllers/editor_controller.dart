@@ -77,7 +77,7 @@ class EditorController extends ChangeNotifier {
   }
 
   void selectFrame(int index) {
-    activeFrame = index.clamp(0, project.frameCount - 1) as int;
+    activeFrame = index.clamp(0, project.frameCount - 1);
     notifyListeners();
   }
 

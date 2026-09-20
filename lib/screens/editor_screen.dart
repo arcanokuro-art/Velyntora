@@ -81,7 +81,7 @@ class _TopBar extends StatelessWidget {
           _SavedBadge(controller: controller),
           const Spacer(),
           IconButton(onPressed: controller.undo, icon: const Icon(Icons.undo_rounded), tooltip: 'Deshacer'),
-          IconButton(onPressed: null, icon: const Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
+          const IconButton(onPressed: null, icon: Icon(Icons.redo_rounded), tooltip: 'Rehacer'),
           const SizedBox(width: 8),
           OutlinedButton.icon(
             onPressed: controller.isSaving ? null : () => _save(context),
@@ -192,7 +192,38 @@ class _PropertiesPanel extends StatelessWidget {
               ]),
               Slider(value: controller.brushSize, min: 1, max: 80, onChanged: controller.setBrushSize),
               const SizedBox(height: 8),
-              Wrap(spacing: 9, runSpacing: 9, children: <Color>[const Color(0xFF17192B), const Color(0xFF7357FF), const Color(0xFFF05CE7), const Color(0xFF21D4F7), const Color(0xFFFFC857), const Color(0xFFFF5E78)].map((color) => InkWell(onTap: () => controller.setColor(color), child: Container(width: 28, height: 28, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: controller.color == color ? Colors.white : Colors.transparent, width: 2)))).toList()),
+              Wrap(
+                spacing: 9,
+                runSpacing: 9,
+                children: <Color>[
+                  const Color(0xFF17192B),
+                  const Color(0xFF7357FF),
+                  const Color(0xFFF05CE7),
+                  const Color(0xFF21D4F7),
+                  const Color(0xFFFFC857),
+                  const Color(0xFFFF5E78),
+                ]
+                    .map(
+                      (color) => InkWell(
+                        onTap: () => controller.setColor(color),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: controller.color == color
+                                  ? Colors.white
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
             ]),
           ),
           const Divider(height: 1),
