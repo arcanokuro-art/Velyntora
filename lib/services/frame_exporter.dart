@@ -40,7 +40,8 @@ class FrameExporter {
     final sanitized = value
         .trim()
         .replaceAll(RegExp(r'[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_');
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
     return sanitized.isEmpty ? 'Velyntora' : sanitized;
   }
 }
