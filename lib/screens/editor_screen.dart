@@ -112,8 +112,9 @@ class _EditorScreenState extends State<EditorScreen> {
     if (!controller.hasUnsavedChanges || controller.isSaving) return;
     autoSaveTimer?.cancel();
     autoSaveTimer = Timer(widget.autoSaveDelay, () async {
-      if (!mounted || !controller.hasUnsavedChanges || controller.isSaving)
+      if (!mounted || !controller.hasUnsavedChanges || controller.isSaving) {
         return;
+      }
       try {
         await controller.saveProject();
       } on Object {
