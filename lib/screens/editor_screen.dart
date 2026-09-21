@@ -623,8 +623,14 @@ class _PropertiesPanel extends StatelessWidget {
             ]),
           ),
           Slider(value: controller.layer.opacity, min: 0, max: 1, onChanged: controller.setActiveLayerOpacity),
-          SwitchListTile(title: const Text('Papel cebolla'), value: controller.onionSkin, onChanged: controller.setOnionSkin),
-          SwitchListTile(title: const Text('Cuadrícula'), value: controller.gridEnabled, onChanged: controller.setGridEnabled),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile(title: const Text('Papel cebolla'), value: controller.onionSkin, onChanged: controller.setOnionSkin),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile(title: const Text('Cuadrícula'), value: controller.gridEnabled, onChanged: controller.setGridEnabled),
+          ),
         ]),
       );
 
