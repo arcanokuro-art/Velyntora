@@ -55,7 +55,7 @@ class DrawingText {
   final String text;
   Offset position;
   final Color color;
-  final double fontSize;
+  double fontSize;
 
   DrawingText copy() => DrawingText(
         text: text,

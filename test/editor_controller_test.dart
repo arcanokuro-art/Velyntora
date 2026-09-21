@@ -279,4 +279,56 @@ void main() {
     expect(controller.selectAt(const Offset(0.2, 0.2)), isFalse);
     expect(controller.selectedStroke, isNull);
   });
+
+  test('elimina un trazo seleccionado con deshacer y rehacer', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.2, 0.2));
+
+    expect(controller.deleteSelection(), isTrue);
+    expect(controller.strokes, isEmpty);
+    controller.undo();
+    expect(controller.strokes, hasLength(1));
+    controller.redo();
+    expect(controller.strokes, isEmpty);
+  });
+
+  test('elimina un texto seleccionado y puede recuperarlo', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.addText('Eliminar', const Offset(0.4, 0.4));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.4, 0.4));
+
+    expect(controller.deleteSelection(), isTrue);
+    expect(controller.texts, isEmpty);
+    controller.undo();
+    expect(controller.texts.single.text, 'Eliminar');
+  });
+
+  test('escala un trazo alrededor de su centro', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.extendStroke(const Offset(0.4, 0.4));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.2, 0.2));
+
+    expect(controller.scaleSelection(2), isTrue);
+    expect(controller.strokes.single.points.first.dx, closeTo(0.1, 0.000001));
+    expect(controller.strokes.single.points.last.dx, closeTo(0.5, 0.000001));
+    controller.undo();
+    expect(controller.strokes.single.points.first, const Offset(0.2, 0.2));
+  });
+
+  test('escala texto respetando los limites de tamano', () {
+    final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.addText('Escalar', const Offset(0.4, 0.4));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.4, 0.4));
+
+    expect(controller.scaleSelection(100), isTrue);
+    expect(controller.texts.single.fontSize, 240);
+    controller.undo();
+    expect(controller.texts.single.fontSize, lessThan(240));
+  });
 }

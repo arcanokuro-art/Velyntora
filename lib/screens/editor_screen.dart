@@ -209,7 +209,53 @@ class _PropertiesPanel extends StatelessWidget {
         width: 280,
         color: VelyntoraColors.surface,
         child: Column(children: <Widget>[
-          Padding(
+          if (controller.tool == DrawingTool.select)
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text('Selección', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  Text(
+                    controller.selectedStroke != null
+                        ? 'Trazo seleccionado'
+                        : controller.selectedText != null
+                            ? 'Texto seleccionado'
+                            : 'Toca un trazo o texto para seleccionarlo',
+                    style: const TextStyle(color: VelyntoraColors.muted),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(children: <Widget>[
+                    IconButton.filledTonal(
+                      onPressed: controller.selectedStroke != null || controller.selectedText != null
+                          ? () => controller.scaleSelection(0.8)
+                          : null,
+                      icon: const Icon(Icons.zoom_out_map_rounded),
+                      tooltip: 'Reducir selección',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filledTonal(
+                      onPressed: controller.selectedStroke != null || controller.selectedText != null
+                          ? () => controller.scaleSelection(1.25)
+                          : null,
+                      icon: const Icon(Icons.zoom_in_map_rounded),
+                      tooltip: 'Ampliar selección',
+                    ),
+                    const Spacer(),
+                    IconButton.filledTonal(
+                      onPressed: controller.selectedStroke != null || controller.selectedText != null
+                          ? controller.deleteSelection
+                          : null,
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      tooltip: 'Eliminar selección',
+                    ),
+                  ]),
+                ],
+              ),
+            )
+          else
+            Padding(
             padding: const EdgeInsets.all(18),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
               const Text('Pincel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
@@ -254,7 +300,7 @@ class _PropertiesPanel extends StatelessWidget {
                     .toList(),
               ),
             ]),
-          ),
+            ),
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 10, 8),

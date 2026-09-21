@@ -114,6 +114,52 @@ class EditorController extends ChangeNotifier {
     _selectionStartTextPosition = null;
   }
 
+  bool deleteSelection() {
+    if (selectedStroke != null) {
+      final index = strokes.indexOf(selectedStroke!);
+      if (index < 0) return false;
+      final item = strokes.removeAt(index);
+      _recordAction(_RemoveStrokeAction(strokes, item, index));
+    } else if (selectedText != null) {
+      final index = texts.indexOf(selectedText!);
+      if (index < 0) return false;
+      final item = texts.removeAt(index);
+      _recordAction(_RemoveTextAction(texts, item, index));
+    } else {
+      return false;
+    }
+    clearSelection(notify: false);
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
+  bool scaleSelection(double factor) {
+    if (factor <= 0) return false;
+    if (selectedStroke != null && selectedStroke!.points.isNotEmpty) {
+      final previous = List<Offset>.from(selectedStroke!.points);
+      final center = previous.reduce((a, b) => a + b) / previous.length.toDouble();
+      final next = previous
+          .map((point) => _clampPoint(center + (point - center) * factor))
+          .toList();
+      selectedStroke!.points
+        ..clear()
+        ..addAll(next);
+      _recordAction(_MoveStrokeAction(selectedStroke!, previous, next));
+    } else if (selectedText != null) {
+      final previous = selectedText!.fontSize;
+      final next = (previous * factor).clamp(8, 240).toDouble();
+      if (previous == next) return false;
+      selectedText!.fontSize = next;
+      _recordAction(_ScaleTextAction(selectedText!, previous, next));
+    } else {
+      return false;
+    }
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
   void clearSelection({bool notify = true}) {
     selectedStroke = null;
     selectedText = null;
@@ -486,6 +532,34 @@ class _TextAction implements _EditAction {
   void redo() => target.add(item);
 }
 
+class _RemoveStrokeAction implements _EditAction {
+  _RemoveStrokeAction(this.target, this.item, this.index);
+
+  final List<DrawingStroke> target;
+  final DrawingStroke item;
+  final int index;
+
+  @override
+  void undo() => target.insert(index.clamp(0, target.length), item);
+
+  @override
+  void redo() => target.remove(item);
+}
+
+class _RemoveTextAction implements _EditAction {
+  _RemoveTextAction(this.target, this.item, this.index);
+
+  final List<DrawingText> target;
+  final DrawingText item;
+  final int index;
+
+  @override
+  void undo() => target.insert(index.clamp(0, target.length), item);
+
+  @override
+  void redo() => target.remove(item);
+}
+
 class _MoveStrokeAction implements _EditAction {
   _MoveStrokeAction(this.stroke, this.previous, this.next);
 
@@ -518,6 +592,20 @@ class _MoveTextAction implements _EditAction {
 
   @override
   void redo() => item.position = next;
+}
+
+class _ScaleTextAction implements _EditAction {
+  _ScaleTextAction(this.item, this.previous, this.next);
+
+  final DrawingText item;
+  final double previous;
+  final double next;
+
+  @override
+  void undo() => item.fontSize = previous;
+
+  @override
+  void redo() => item.fontSize = next;
 }
 
 class _ClearFrameAction implements _EditAction {
