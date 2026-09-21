@@ -21,8 +21,10 @@ void main() {
     controller.beginStroke(const Offset(0.1, 0.1));
     controller.extendStroke(const Offset(0.9, 0.9));
 
-    final bytes = await exporter.renderPng(controller);
-    expect(bytes.length, greaterThan(100));
-    expect(bytes.take(8).toList(), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
+    final bytes = await tester.runAsync(() => exporter.renderPng(controller));
+    expect(bytes, isNotNull);
+    final png = bytes!;
+    expect(png.length, greaterThan(100));
+    expect(png.take(8).toList(), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
   });
 }
