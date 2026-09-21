@@ -57,7 +57,7 @@ void main() {
     painted.extendStroke(const Offset(0.9, 0.9));
     painted
       ..selectFrame(1)
-      ..toggleOnionSkin();
+      ..setOnionSkin(true);
 
     final blank = EditorController(
       AnimationProject(name: 'En blanco', width: 64, height: 36),
