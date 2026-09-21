@@ -71,4 +71,21 @@ void main() {
 
     expect(exported, expected);
   });
+
+  testWidgets('exporta un proyecto vertical con sus dimensiones', (tester) async {
+    final controller = EditorController(
+      AnimationProject(name: 'Vertical', width: 72, height: 128),
+    );
+
+    final bytes = await tester.runAsync(() => exporter.renderPng(controller));
+    final png = bytes!;
+    int readUint32(int offset) =>
+        (png[offset] << 24) |
+        (png[offset + 1] << 16) |
+        (png[offset + 2] << 8) |
+        png[offset + 3];
+
+    expect(readUint32(16), 72);
+    expect(readUint32(20), 128);
+  });
 }

@@ -161,10 +161,12 @@ class AnimationLayer {
 class AnimationProject {
   AnimationProject({
     required this.name,
-    this.width = 1920,
-    this.height = 1080,
+    int width = 1920,
+    int height = 1080,
     this.fps = 12,
-  }) : layers = <AnimationLayer>[AnimationLayer(name: 'Capa 1')];
+  })  : width = width.clamp(64, 4096).toInt(),
+        height = height.clamp(64, 4096).toInt(),
+        layers = <AnimationLayer>[AnimationLayer(name: 'Capa 1')];
 
   final String name;
   final int width;

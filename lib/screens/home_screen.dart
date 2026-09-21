@@ -132,6 +132,7 @@ class HomeScreen extends StatelessWidget {
   Future<void> _createProject(BuildContext context) async {
     final nameController = TextEditingController(text: 'Animación sin título');
     var fps = 12;
+    var resolution = '1920x1080';
     final project = await showDialog<AnimationProject>(
       context: context,
       builder: (context) => AlertDialog(
@@ -145,7 +146,23 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: <Widget>[
-                  const Expanded(child: _SettingChip(title: 'Resolución', value: '1920 × 1080')),
+                  Expanded(
+                    child: StatefulBuilder(
+                      builder: (context, setDialogState) => DropdownButtonFormField<String>(
+                        value: resolution,
+                        decoration: const InputDecoration(labelText: 'Resolución'),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: '1280x720', child: Text('HD · 1280 × 720')),
+                          DropdownMenuItem(value: '1920x1080', child: Text('Full HD · 1920 × 1080')),
+                          DropdownMenuItem(value: '1080x1080', child: Text('Cuadrado · 1080 × 1080')),
+                          DropdownMenuItem(value: '1080x1920', child: Text('Vertical · 1080 × 1920')),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) setDialogState(() => resolution = value);
+                        },
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatefulBuilder(
@@ -172,7 +189,16 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               final name = nameController.text.trim();
               if (name.isNotEmpty) {
-                Navigator.pop(context, AnimationProject(name: name, fps: fps));
+                final dimensions = resolution.split('x').map(int.parse).toList();
+                Navigator.pop(
+                  context,
+                  AnimationProject(
+                    name: name,
+                    width: dimensions[0],
+                    height: dimensions[1],
+                    fps: fps,
+                  ),
+                );
               }
             },
             child: const Text('Crear'),
@@ -210,21 +236,4 @@ class _NavItem extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SettingChip extends StatelessWidget {
-  const _SettingChip({required this.title, required this.value});
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: VelyntoraColors.background, borderRadius: BorderRadius.circular(10)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-          Text(title, style: const TextStyle(color: VelyntoraColors.muted, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ]),
-      );
 }

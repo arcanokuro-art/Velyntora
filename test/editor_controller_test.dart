@@ -453,4 +453,28 @@ void main() {
 
     expect(restored.fps, 12);
   });
+
+  test('conserva una resolucion vertical al serializar', () {
+    final project = AnimationProject(
+      name: 'Vertical',
+      width: 1080,
+      height: 1920,
+    );
+
+    final restored = AnimationProject.fromJson(project.toJson());
+
+    expect(restored.width, 1080);
+    expect(restored.height, 1920);
+  });
+
+  test('limita dimensiones que agotarian memoria o serian invalidas', () {
+    final project = AnimationProject(
+      name: 'Limites',
+      width: 1,
+      height: 9000,
+    );
+
+    expect(project.width, 64);
+    expect(project.height, 4096);
+  });
 }
