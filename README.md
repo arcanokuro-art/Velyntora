@@ -6,15 +6,16 @@ Velyntora es un editor original de animación 2D. Su primera plataforma de prueb
 
 - Galería local de proyectos.
 - Creación de proyectos 16:9 a 1920 × 1080.
-- Editor oscuro optimizado para escritorio.
+- Editor adaptable para Android y escritorio.
 - Lienzo dibujable con ratón o pantalla táctil.
-- Pincel, borrador, color y tamaño.
-- Capas visibles y bloqueables.
-- Fotogramas, duplicación y reproducción.
+- Pincel, marcador, tinta, borrador, relleno, texto y selección.
+- Capas reordenables con visibilidad, bloqueo y opacidad.
+- Fotogramas, duplicación, reproducción y deshacer/rehacer.
 - Papel cebolla.
 - Cuadrícula.
-- Deshacer el último trazo.
+- Transformación de trazos y textos: mover, escalar y rotar.
 - Guardado local de proyectos `.vely`.
+- Exportación del fotograma actual o de una secuencia PNG completa.
 - Identidad visual e icono de Velyntora.
 
 ## Ejecutar
@@ -39,13 +40,13 @@ flutter build apk --release
 
 ## Próximos hitos
 
-1. Galería cargada desde proyectos `.vely` existentes.
-2. Miniaturas reales en la línea de tiempo.
-3. Selección, transformación, relleno y texto.
-4. Importación de imágenes, audio y video.
-5. Exportación PNG, GIF y MP4 mediante FFmpeg.
+1. Miniaturas reales en la línea de tiempo.
+2. Importación de imágenes, audio y video.
+3. Exportación GIF y MP4.
+4. Compartir archivos con otras aplicaciones.
+5. Relleno por regiones cerradas.
 6. Presión de tableta y motor de pinceles avanzado.
 
 ## Estado
 
-Versión `0.1.0`: prototipo funcional inicial. El guardado local ya funciona; la exportación todavía aparece como función en preparación.
+Versión `0.1.0`: prototipo funcional en desarrollo. El guardado local y la exportación PNG ya funcionan.
