@@ -11,6 +11,7 @@ Velyntora es un editor original de animación 2D. Su primera plataforma de prueb
 - Pincel, marcador, tinta, borrador, relleno, texto y selección.
 - Capas reordenables con visibilidad, bloqueo y opacidad.
 - Fotogramas, duplicación, reproducción y deshacer/rehacer.
+- Miniaturas reales en la línea de tiempo.
 - Papel cebolla.
 - Cuadrícula.
 - Transformación de trazos y textos: mover, escalar y rotar.
@@ -40,12 +41,11 @@ flutter build apk --release
 
 ## Próximos hitos
 
-1. Miniaturas reales en la línea de tiempo.
-2. Importación de imágenes, audio y video.
-3. Exportación GIF y MP4.
-4. Compartir archivos con otras aplicaciones.
-5. Relleno por regiones cerradas.
-6. Presión de tableta y motor de pinceles avanzado.
+1. Importación de imágenes, audio y video.
+2. Exportación GIF y MP4.
+3. Compartir archivos con otras aplicaciones.
+4. Relleno por regiones cerradas.
+5. Presión de tableta y motor de pinceles avanzado.
 
 ## Estado
 

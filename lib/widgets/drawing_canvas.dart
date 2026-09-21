@@ -12,6 +12,35 @@ class DrawingCanvas extends StatefulWidget {
   State<DrawingCanvas> createState() => _DrawingCanvasState();
 }
 
+class FrameThumbnail extends StatelessWidget {
+  const FrameThumbnail({
+    super.key,
+    required this.controller,
+    required this.frame,
+  });
+
+  final EditorController controller;
+  final int frame;
+
+  @override
+  Widget build(BuildContext context) => RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: ColoredBox(
+            color: Colors.white,
+            child: CustomPaint(
+              painter: AnimationCanvasPainter(
+                controller,
+                showGuides: false,
+                frameOverride: frame,
+              ),
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+}
+
 class _DrawingCanvasState extends State<DrawingCanvas> {
   final TransformationController _transformation = TransformationController();
 

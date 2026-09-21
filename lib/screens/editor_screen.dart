@@ -572,7 +572,16 @@ class _Timeline extends StatelessWidget {
                     width: compact ? 86 : 116,
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: selected ? VelyntoraColors.cyan : VelyntoraColors.border, width: selected ? 3 : 1)),
                     child: Stack(children: <Widget>[
-                      Center(child: Icon(Icons.draw_outlined, color: Colors.blueGrey.withValues(alpha: 0.3))),
+                      Positioned.fill(
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: FrameThumbnail(
+                            key: ValueKey<String>('frame-thumbnail-$index'),
+                            controller: controller,
+                            frame: index,
+                          ),
+                        ),
+                      ),
                       Positioned(left: 6, top: 5, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(10)), child: Text('${index + 1}', style: const TextStyle(fontSize: 11)))),
                     ]),
                   ),
