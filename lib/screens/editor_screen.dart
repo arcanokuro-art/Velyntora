@@ -185,6 +185,23 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  Future<void> _exportGif(BuildContext context) async {
+    try {
+      final file = await exporter.exportAnimatedGif(controller);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('GIF animado exportado en ${file.path}')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo exportar el GIF: $error')),
+        );
+      }
+    }
+  }
+
   Future<void> _showExportOptions(BuildContext context) async {
     final option = await showModalBottomSheet<String>(
       context: context,
@@ -208,6 +225,12 @@ class _EditorScreenState extends State<EditorScreen> {
               subtitle: Text('${controller.project.frameCount} fotogramas numerados'),
               onTap: () => Navigator.pop(sheetContext, 'sequence'),
             ),
+            ListTile(
+              leading: const Icon(Icons.gif_box_outlined),
+              title: const Text('GIF animado'),
+              subtitle: Text('${controller.project.frameCount} fotogramas a ${controller.project.fps} FPS'),
+              onTap: () => Navigator.pop(sheetContext, 'gif'),
+            ),
           ],
         ),
       ),
@@ -215,6 +238,7 @@ class _EditorScreenState extends State<EditorScreen> {
     if (!context.mounted) return;
     if (option == 'frame') await _exportFrame(context);
     if (option == 'sequence') await _exportSequence(context);
+    if (option == 'gif') await _exportGif(context);
   }
 }
 

@@ -88,4 +88,17 @@ void main() {
     expect(readUint32(16), 72);
     expect(readUint32(20), 128);
   });
+
+  testWidgets('renderiza RGBA completo para el codificador GIF', (tester) async {
+    final controller = EditorController(
+      AnimationProject(name: 'RGBA', width: 64, height: 64),
+    );
+
+    final bytes = await tester.runAsync(
+      () => exporter.renderFrameRgba(controller, 0),
+    );
+
+    expect(bytes, isNotNull);
+    expect(bytes, hasLength(64 * 64 * 4));
+  });
 }

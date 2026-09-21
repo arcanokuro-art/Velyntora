@@ -20,6 +20,7 @@ Velyntora es un editor original de animación 2D. Su primera plataforma de prueb
 - Guardado local de proyectos `.vely`.
 - Guardado automático y aviso antes de descartar cambios.
 - Exportación del fotograma actual o de una secuencia PNG completa.
+- Exportación GIF animada según los FPS del proyecto.
 - Identidad visual e icono de Velyntora.
 
 ## Ejecutar
@@ -45,7 +46,7 @@ flutter build apk --release
 ## Próximos hitos
 
 1. Importación de imágenes, audio y video.
-2. Exportación GIF y MP4.
+2. Exportación MP4.
 3. Compartir archivos con otras aplicaciones.
 4. Relleno por regiones cerradas.
 5. Presión de tableta y motor de pinceles avanzado.
