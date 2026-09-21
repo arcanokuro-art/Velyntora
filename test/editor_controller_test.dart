@@ -308,6 +308,7 @@ void main() {
 
   test('escala un trazo alrededor de su centro', () {
     final controller = EditorController(AnimationProject(name: 'Seleccion'));
+    controller.setStabilization(0);
     controller.beginStroke(const Offset(0.2, 0.2));
     controller.extendStroke(const Offset(0.4, 0.4));
     controller.selectTool(DrawingTool.select);
@@ -334,6 +335,7 @@ void main() {
 
   test('rota un trazo alrededor de su centro con deshacer', () {
     final controller = EditorController(AnimationProject(name: 'Rotacion'));
+    controller.setStabilization(0);
     controller.beginStroke(const Offset(0.2, 0.5));
     controller.extendStroke(const Offset(0.8, 0.5));
     controller.selectTool(DrawingTool.select);
