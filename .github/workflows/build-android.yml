@@ -44,7 +44,11 @@ jobs:
         run: flutter analyze
 
       - name: Ejecutar pruebas
-        run: flutter test --reporter expanded --timeout 45s
+        run: |
+          for test_file in test/*_test.dart; do
+            echo "Ejecutando $test_file"
+            timeout 90s flutter test "$test_file" --reporter expanded --timeout 30s
+          done
 
       - name: Compilar APK
         run: flutter build apk --release
