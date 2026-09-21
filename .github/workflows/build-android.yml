@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Descargar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Instalar Java
         uses: actions/setup-java@v5
@@ -40,6 +40,9 @@ jobs:
       - name: Aplicar icono de Velyntora
         run: dart run flutter_launcher_icons
 
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed lib test
+
       - name: Analizar código
         run: flutter analyze
 
@@ -57,7 +60,7 @@ jobs:
         run: cp build/app/outputs/flutter-apk/app-release.apk Velyntora-Android-v0.1.0.apk
 
       - name: Publicar APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Velyntora-Android-v0.1.0
           path: Velyntora-Android-v0.1.0.apk
