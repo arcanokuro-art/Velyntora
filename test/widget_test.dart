@@ -1,16 +1,26 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:velyntora/main.dart';
 import 'package:velyntora/models/animation_models.dart';
 import 'package:velyntora/screens/editor_screen.dart';
+import 'package:velyntora/screens/home_screen.dart';
+import 'package:velyntora/services/project_storage.dart';
 import 'package:velyntora/widgets/drawing_canvas.dart';
 
 void main() {
   testWidgets('muestra la galería de Velyntora', (tester) async {
-    await tester.pumpWidget(const VelyntoraApp());
+    final directory = await Directory.systemTemp.createTemp('velyntora_widget_');
+    addTearDown(() => directory.delete(recursive: true));
+    await tester.pumpWidget(
+      VelyntoraApp(storage: ProjectStorage(rootDirectory: directory)),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Velyntora'), findsOneWidget);
     expect(find.text('Tus proyectos'), findsOneWidget);
     expect(find.text('Nuevo proyecto'), findsOneWidget);
+    expect(find.text('Todavía no hay proyectos guardados.'), findsOneWidget);
   });
 
   testWidgets('editor cabe en una pantalla Android horizontal', (tester) async {
@@ -25,6 +35,36 @@ void main() {
     await tester.pump();
     expect(find.text('Android'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('la galeria muestra proyectos guardados', (tester) async {
+    final directory = await Directory.systemTemp.createTemp('velyntora_gallery_');
+    addTearDown(() => directory.delete(recursive: true));
+    final storage = ProjectStorage(rootDirectory: directory);
+    await storage.save(AnimationProject(name: 'Proyecto recuperado', fps: 24));
+
+    await tester.pumpWidget(MaterialApp(home: HomeScreen(storage: storage)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Proyecto recuperado'), findsOneWidget);
+    expect(find.textContaining('24 FPS'), findsOneWidget);
+  });
+
+  testWidgets('elimina un proyecto confirmado desde la galeria', (tester) async {
+    final directory = await Directory.systemTemp.createTemp('velyntora_delete_');
+    addTearDown(() => directory.delete(recursive: true));
+    final storage = ProjectStorage(rootDirectory: directory);
+    final file = await storage.save(AnimationProject(name: 'Descartar'));
+
+    await tester.pumpWidget(MaterialApp(home: HomeScreen(storage: storage)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Eliminar proyecto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Eliminar'));
+    await tester.pumpAndSettle();
+
+    expect(await file.exists(), isFalse);
+    expect(find.text('Todavía no hay proyectos guardados.'), findsOneWidget);
   });
 
   testWidgets('la linea de tiempo muestra miniaturas reales', (tester) async {
@@ -63,3 +103,4 @@ void main() {
     expect(painter.showGuides, isFalse);
   });
 }
+import 'dart:io';

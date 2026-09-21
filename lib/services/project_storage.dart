@@ -6,10 +6,12 @@ import 'package:path_provider/path_provider.dart';
 import '../models/animation_models.dart';
 
 class ProjectStorage {
-  const ProjectStorage();
+  ProjectStorage({this.rootDirectory});
+
+  final Directory? rootDirectory;
 
   Future<Directory> get projectsDirectory async {
-    final documents = await getApplicationDocumentsDirectory();
+    final documents = rootDirectory ?? await getApplicationDocumentsDirectory();
     final directory = Directory('${documents.path}${Platform.pathSeparator}Velyntora${Platform.pathSeparator}Projects');
     if (!await directory.exists()) await directory.create(recursive: true);
     return directory;
@@ -41,5 +43,16 @@ class ProjectStorage {
         .toList();
     projects.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
     return projects;
+  }
+
+  Future<void> delete(File file) async {
+    if (!await file.exists()) return;
+    final directory = await projectsDirectory;
+    final root = '${await directory.resolveSymbolicLinks()}${Platform.pathSeparator}';
+    final target = await file.resolveSymbolicLinks();
+    if (!target.startsWith(root)) {
+      throw ArgumentError('El archivo no pertenece a Velyntora.');
+    }
+    await file.delete();
   }
 }

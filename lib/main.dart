@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/home_screen.dart';
+import 'services/project_storage.dart';
 import 'theme/velyntora_theme.dart';
 
 Future<void> main() async {
@@ -15,7 +16,9 @@ Future<void> main() async {
 }
 
 class VelyntoraApp extends StatelessWidget {
-  const VelyntoraApp({super.key});
+  const VelyntoraApp({super.key, this.storage});
+
+  final ProjectStorage? storage;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,7 @@ class VelyntoraApp extends StatelessWidget {
       title: 'Velyntora',
       debugShowCheckedModeBanner: false,
       theme: VelyntoraTheme.dark,
-      home: const HomeScreen(),
+      home: HomeScreen(storage: storage),
     );
   }
 }

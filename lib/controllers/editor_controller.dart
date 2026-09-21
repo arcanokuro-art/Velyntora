@@ -8,7 +8,7 @@ import '../services/project_storage.dart';
 
 class EditorController extends ChangeNotifier {
   EditorController(this.project, {ProjectStorage? storage})
-      : storage = storage ?? const ProjectStorage();
+      : storage = storage ?? ProjectStorage();
 
   final AnimationProject project;
   final ProjectStorage storage;

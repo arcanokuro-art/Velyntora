@@ -5,6 +5,7 @@ Velyntora es un editor original de animación 2D. Su primera plataforma de prueb
 ## Primera versión funcional
 
 - Galería local de proyectos.
+- Apertura y eliminación segura de proyectos guardados.
 - Proyectos HD, Full HD, cuadrados y verticales.
 - Editor adaptable para Android y escritorio.
 - Lienzo dibujable con ratón o pantalla táctil.

@@ -1,11 +1,31 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../models/animation_models.dart';
+import '../services/project_storage.dart';
 import '../theme/velyntora_theme.dart';
 import 'editor_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key, this.storage});
+
+  final ProjectStorage? storage;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final ProjectStorage storage;
+  late Future<List<_StoredProject>> projects;
+
+  @override
+  void initState() {
+    super.initState();
+    storage = widget.storage ?? ProjectStorage();
+    projects = _loadProjects();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,47 +98,7 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 34),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _openEditor(context, AnimationProject(name: 'Mi primera animación')),
-                        borderRadius: BorderRadius.circular(18),
-                        child: Container(
-                          width: 310,
-                          decoration: BoxDecoration(
-                            color: VelyntoraColors.surface,
-                            border: Border.all(color: VelyntoraColors.border),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
-                                    gradient: LinearGradient(
-                                      colors: <Color>[Color(0xFF252949), Color(0xFF14172A)],
-                                    ),
-                                  ),
-                                  child: const Center(child: Icon(Icons.movie_creation_outlined, size: 72, color: VelyntoraColors.violet)),
-                                ),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.all(18),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text('Mi primera animación', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                                    SizedBox(height: 6),
-                                    Text('1920 × 1080  •  12 FPS', style: TextStyle(color: VelyntoraColors.muted)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    Expanded(child: _buildProjectGallery(context)),
                   ],
                 ),
               ),
@@ -127,6 +107,86 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildProjectGallery(BuildContext context) => FutureBuilder<List<_StoredProject>>(
+        future: projects,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('No se pudieron cargar los proyectos: ${snapshot.error}'));
+          }
+          final items = snapshot.data ?? const <_StoredProject>[];
+          if (items.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(Icons.movie_creation_outlined, size: 72, color: VelyntoraColors.violet),
+                  const SizedBox(height: 14),
+                  const Text('Todavía no hay proyectos guardados.'),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: () => _createProject(context),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Crear el primero'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return GridView.builder(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 320,
+              childAspectRatio: 1.15,
+              crossAxisSpacing: 18,
+              mainAxisSpacing: 18,
+            ),
+            itemCount: items.length,
+            itemBuilder: (context, index) => _ProjectCard(
+              entry: items[index],
+              onOpen: () => _openEditor(context, items[index].project),
+              onDelete: () => _deleteProject(context, items[index]),
+            ),
+          );
+        },
+      );
+
+  Future<List<_StoredProject>> _loadProjects() async {
+    final files = await storage.listProjects();
+    final projects = <_StoredProject>[];
+    for (final file in files) {
+      try {
+        projects.add(_StoredProject(file, await storage.load(file)));
+      } on FormatException {
+        continue;
+      }
+    }
+    return projects;
+  }
+
+  void _refreshProjects() {
+    if (!mounted) return;
+    setState(() => projects = _loadProjects());
+  }
+
+  Future<void> _deleteProject(BuildContext context, _StoredProject entry) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar proyecto'),
+        content: Text('¿Eliminar “${entry.project.name}”? Esta acción no se puede deshacer.'),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await storage.delete(entry.file);
+    _refreshProjects();
   }
 
   Future<void> _createProject(BuildContext context) async {
@@ -210,10 +270,62 @@ class HomeScreen extends StatelessWidget {
     if (project != null && context.mounted) _openEditor(context, project);
   }
 
-  void _openEditor(BuildContext context, AnimationProject project) {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => EditorScreen(project: project)));
+  Future<void> _openEditor(BuildContext context, AnimationProject project) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => EditorScreen(project: project)));
+    _refreshProjects();
   }
 }
+
+class _StoredProject {
+  const _StoredProject(this.file, this.project);
+  final File file;
+  final AnimationProject project;
+}
+
+class _ProjectCard extends StatelessWidget {
+  const _ProjectCard({required this.entry, required this.onOpen, required this.onDelete});
+  final _StoredProject entry;
+  final VoidCallback onOpen;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onOpen,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: <Color>[Color(0xFF252949), Color(0xFF14172A)]),
+                  ),
+                  child: Center(child: Icon(Icons.movie_creation_outlined, size: 58, color: VelyntoraColors.violet)),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 6, 10),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(entry.project.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text('${entry.project.width} × ${entry.project.height} • ${entry.project.fps} FPS', style: const TextStyle(color: VelyntoraColors.muted, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline_rounded), tooltip: 'Eliminar proyecto'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
 class _NavItem extends StatelessWidget {
   const _NavItem({required this.icon, required this.label, this.active = false});
