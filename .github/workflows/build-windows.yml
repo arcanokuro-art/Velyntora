@@ -37,7 +37,7 @@ jobs:
         run: flutter build windows --release
 
       - name: Publicar ejecutable
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: Velyntora-Windows-v0.1.0
           path: build/windows/x64/runner/Release/
