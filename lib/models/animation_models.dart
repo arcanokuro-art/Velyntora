@@ -192,7 +192,7 @@ class AnimationProject {
       name: json['name'] as String,
       width: json['width'] as int,
       height: json['height'] as int,
-      fps: json['fps'] as int,
+      fps: ((json['fps'] as num?)?.toInt() ?? 12).clamp(1, 60).toInt(),
     )..frameCount = json['frameCount'] as int;
     project.layers
       ..clear()

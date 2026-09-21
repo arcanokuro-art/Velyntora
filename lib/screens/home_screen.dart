@@ -131,7 +131,8 @@ class HomeScreen extends StatelessWidget {
 
   Future<void> _createProject(BuildContext context) async {
     final nameController = TextEditingController(text: 'Animación sin título');
-    final name = await showDialog<String>(
+    var fps = 12;
+    final project = await showDialog<AnimationProject>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Nuevo proyecto'),
@@ -142,11 +143,24 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               TextField(controller: nameController, autofocus: true, decoration: const InputDecoration(labelText: 'Nombre')),
               const SizedBox(height: 16),
-              const Row(
+              Row(
                 children: <Widget>[
-                  Expanded(child: _SettingChip(title: 'Resolución', value: '1920 × 1080')),
-                  SizedBox(width: 12),
-                  Expanded(child: _SettingChip(title: 'Velocidad', value: '12 FPS')),
+                  const Expanded(child: _SettingChip(title: 'Resolución', value: '1920 × 1080')),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: StatefulBuilder(
+                      builder: (context, setDialogState) => DropdownButtonFormField<int>(
+                        value: fps,
+                        decoration: const InputDecoration(labelText: 'Velocidad'),
+                        items: const <int>[6, 12, 15, 24, 30, 60]
+                            .map((value) => DropdownMenuItem<int>(value: value, child: Text('$value FPS')))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) setDialogState(() => fps = value);
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -154,13 +168,20 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: <Widget>[
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, nameController.text.trim()), child: const Text('Crear')),
+          FilledButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isNotEmpty) {
+                Navigator.pop(context, AnimationProject(name: name, fps: fps));
+              }
+            },
+            child: const Text('Crear'),
+          ),
         ],
       ),
     );
-    if (name != null && name.isNotEmpty && context.mounted) {
-      _openEditor(context, AnimationProject(name: name));
-    }
+    nameController.dispose();
+    if (project != null && context.mounted) _openEditor(context, project);
   }
 
   void _openEditor(BuildContext context, AnimationProject project) {

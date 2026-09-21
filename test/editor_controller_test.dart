@@ -426,4 +426,31 @@ void main() {
     expect(controller.strokes.single.color.a, closeTo(0.5, 0.01));
     expect(controller.strokes.single.points.last, const Offset(0.5, 0.5));
   });
+
+  test('configura los FPS y marca el proyecto como modificado', () {
+    final controller = EditorController(AnimationProject(name: 'FPS'));
+
+    controller.setFps(24);
+
+    expect(controller.project.fps, 24);
+    expect(controller.playbackInterval, const Duration(milliseconds: 42));
+    expect(controller.hasUnsavedChanges, isTrue);
+  });
+
+  test('limita los FPS al rango compatible', () {
+    final controller = EditorController(AnimationProject(name: 'FPS'));
+    controller.setFps(100);
+    expect(controller.project.fps, 60);
+    controller.setFps(0);
+    expect(controller.project.fps, 1);
+  });
+
+  test('recupera proyectos antiguos sin FPS', () {
+    final project = AnimationProject(name: 'Anterior');
+    final json = project.toJson()..remove('fps');
+
+    final restored = AnimationProject.fromJson(json);
+
+    expect(restored.fps, 12);
+  });
 }

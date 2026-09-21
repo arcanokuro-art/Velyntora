@@ -40,6 +40,8 @@ class EditorController extends ChangeNotifier {
   List<DrawingText> get texts => layer.textsAt(activeFrame);
   bool get canUndo => _undoHistory.isNotEmpty;
   bool get canRedo => _redoHistory.isNotEmpty;
+  Duration get playbackInterval =>
+      Duration(milliseconds: (1000 / project.fps).round());
 
   void selectTool(DrawingTool next) {
     tool = next;
@@ -554,15 +556,26 @@ class EditorController extends ChangeNotifier {
       isPlaying = false;
     } else {
       isPlaying = true;
-      _playbackTimer = Timer.periodic(
-        Duration(milliseconds: (1000 / project.fps).round()),
-        (_) {
-          activeFrame = (activeFrame + 1) % project.frameCount;
-          notifyListeners();
-        },
-      );
+      _startPlaybackTimer();
     }
     notifyListeners();
+  }
+
+  void setFps(int value) {
+    final next = value.clamp(1, 60).toInt();
+    if (project.fps == next) return;
+    project.fps = next;
+    hasUnsavedChanges = true;
+    if (isPlaying) _startPlaybackTimer();
+    notifyListeners();
+  }
+
+  void _startPlaybackTimer() {
+    _playbackTimer?.cancel();
+    _playbackTimer = Timer.periodic(playbackInterval, (_) {
+      activeFrame = (activeFrame + 1) % project.frameCount;
+      notifyListeners();
+    });
   }
 
   Future<String> saveProject() async {

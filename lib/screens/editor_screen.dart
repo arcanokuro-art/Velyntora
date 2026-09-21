@@ -543,7 +543,10 @@ class _Timeline extends StatelessWidget {
               const SizedBox(width: 12),
               Text('${controller.activeFrame + 1} / ${controller.project.frameCount}'),
               const SizedBox(width: 14),
-              Text('${controller.project.fps} FPS', style: const TextStyle(color: VelyntoraColors.muted)),
+              TextButton(
+                onPressed: () => _changeFps(context),
+                child: Text('${controller.project.fps} FPS'),
+              ),
               const Spacer(),
               if (!compact) TextButton.icon(onPressed: () => controller.addFrame(duplicate: true), icon: const Icon(Icons.copy_rounded), label: const Text('Duplicar')),
               IconButton(
@@ -598,6 +601,25 @@ class _Timeline extends StatelessWidget {
         const SnackBar(content: Text('El proyecto debe conservar al menos un fotograma.')),
       );
     }
+  }
+
+  Future<void> _changeFps(BuildContext context) async {
+    final fps = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Velocidad de reproducción'),
+        children: <Widget>[
+          for (final value in const <int>[6, 12, 15, 24, 30, 60])
+            RadioListTile<int>(
+              value: value,
+              groupValue: controller.project.fps,
+              title: Text('$value FPS'),
+              onChanged: (selected) => Navigator.pop(dialogContext, selected),
+            ),
+        ],
+      ),
+    );
+    if (fps != null) controller.setFps(fps);
   }
 }
 

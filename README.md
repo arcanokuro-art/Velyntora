@@ -11,6 +11,7 @@ Velyntora es un editor original de animación 2D. Su primera plataforma de prueb
 - Pincel, marcador, tinta, borrador, relleno, texto y selección.
 - Capas reordenables con visibilidad, bloqueo y opacidad.
 - Fotogramas, duplicación, reproducción y deshacer/rehacer.
+- Velocidad configurable entre 6 y 60 FPS.
 - Miniaturas reales en la línea de tiempo.
 - Papel cebolla.
 - Cuadrícula.
