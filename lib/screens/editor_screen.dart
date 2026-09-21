@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/editor_controller.dart';
 import '../models/animation_models.dart';
+import '../services/frame_exporter.dart';
 import '../theme/velyntora_theme.dart';
 import '../widgets/drawing_canvas.dart';
 
@@ -15,6 +16,7 @@ class EditorScreen extends StatefulWidget {
 
 class _EditorScreenState extends State<EditorScreen> {
   late final EditorController controller = EditorController(widget.project);
+  final FrameExporter exporter = const FrameExporter();
 
   @override
   void dispose() {
@@ -29,7 +31,10 @@ class _EditorScreenState extends State<EditorScreen> {
         animation: controller,
         builder: (context, _) => Column(
           children: <Widget>[
-            _TopBar(controller: controller),
+            _TopBar(
+              controller: controller,
+              onExport: () => _exportFrame(context),
+            ),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -65,11 +70,29 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
   }
+
+  Future<void> _exportFrame(BuildContext context) async {
+    try {
+      final file = await exporter.exportCurrentFrame(controller);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PNG exportado en ${file.path}')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo exportar: $error')),
+        );
+      }
+    }
+  }
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.controller});
+  const _TopBar({required this.controller, required this.onExport});
   final EditorController controller;
+  final VoidCallback onExport;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -103,9 +126,9 @@ class _TopBar extends StatelessWidget {
                 ),
               const SizedBox(width: 6),
               if (compact)
-                IconButton.filled(onPressed: () => _comingSoon(context, 'La exportación mediante FFmpeg se integrará después del núcleo del editor.'), icon: const Icon(Icons.ios_share_rounded), tooltip: 'Exportar')
+                IconButton.filled(onPressed: onExport, icon: const Icon(Icons.ios_share_rounded), tooltip: 'Exportar PNG')
               else
-                FilledButton.icon(onPressed: () => _comingSoon(context, 'La exportación mediante FFmpeg se integrará después del núcleo del editor.'), icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar')),
+                FilledButton.icon(onPressed: onExport, icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar PNG')),
             ]),
           );
         },
@@ -121,10 +144,6 @@ class _TopBar extends StatelessWidget {
         child: _PropertiesPanel(controller: controller),
       ),
     );
-  }
-
-  void _comingSoon(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> _save(BuildContext context) async {

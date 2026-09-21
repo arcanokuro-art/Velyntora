@@ -165,9 +165,11 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
 }
 
 class AnimationCanvasPainter extends CustomPainter {
-  AnimationCanvasPainter(this.controller) : super(repaint: controller);
+  AnimationCanvasPainter(this.controller, {this.showGuides = true})
+      : super(repaint: controller);
 
   final EditorController controller;
+  final bool showGuides;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -179,11 +181,11 @@ class AnimationCanvasPainter extends CustomPainter {
     }
     _paintFrame(canvas, size, controller.activeFrame);
 
-    if (controller.tool == DrawingTool.select) {
+    if (showGuides && controller.tool == DrawingTool.select) {
       _paintSelection(canvas, size);
     }
 
-    if (controller.gridEnabled) _paintGrid(canvas, size);
+    if (showGuides && controller.gridEnabled) _paintGrid(canvas, size);
     canvas.restore();
   }
 
