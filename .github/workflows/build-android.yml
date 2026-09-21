@@ -4,9 +4,6 @@ concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: write
-
 on:
   workflow_dispatch:
   push:
@@ -43,19 +40,8 @@ jobs:
       - name: Aplicar icono de Velyntora
         run: dart run flutter_launcher_icons
 
-      - name: Aplicar formato oficial
-        run: dart format lib test
-
-      - name: Guardar formato corregido
-        shell: bash
-        run: |
-          if ! git diff --quiet -- lib test; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add lib test
-            git commit -m "style: apply canonical Dart formatting"
-            git push
-          fi
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Analizar código
         run: flutter analyze
