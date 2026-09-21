@@ -169,7 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshProjects() {
     if (!mounted) return;
-    setState(() => projects = _loadProjects());
+    setState(() {
+      projects = _loadProjects();
+    });
   }
 
   Future<void> _deleteProject(BuildContext context, _StoredProject entry) async {
@@ -346,10 +348,13 @@ class _NavItem extends StatelessWidget {
         color: active ? VelyntoraColors.violet.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: active ? VelyntoraColors.cyan : VelyntoraColors.muted),
-        title: Text(label),
-        dense: true,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          leading: Icon(icon, color: active ? VelyntoraColors.cyan : VelyntoraColors.muted),
+          title: Text(label),
+          dense: true,
+        ),
       ),
     );
   }

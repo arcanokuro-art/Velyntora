@@ -591,8 +591,10 @@ class _PropertiesPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final layer = controller.project.layers[index];
                 final selected = index == controller.activeLayer;
-                return Container(
-                  color: selected ? VelyntoraColors.violet.withValues(alpha: 0.14) : null,
+                return Material(
+                  color: selected
+                      ? VelyntoraColors.violet.withValues(alpha: 0.14)
+                      : Colors.transparent,
                   child: ListTile(
                     dense: true,
                     onTap: () => controller.selectLayer(index),
