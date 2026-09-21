@@ -240,7 +240,13 @@ class AnimationCanvasPainter extends CustomPainter {
           ),
           textDirection: TextDirection.ltr,
         )..layout(maxWidth: size.width * (1 - item.position.dx));
-        textPainter.paint(canvas, _scale(item.position, size));
+        final origin = _scale(item.position, size);
+        canvas
+          ..save()
+          ..translate(origin.dx, origin.dy)
+          ..rotate(item.rotation);
+        textPainter.paint(canvas, Offset.zero);
+        canvas.restore();
       }
     }
   }

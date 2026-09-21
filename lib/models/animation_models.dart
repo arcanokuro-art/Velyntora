@@ -50,18 +50,21 @@ class DrawingText {
     required this.position,
     required this.color,
     required this.fontSize,
+    this.rotation = 0,
   });
 
-  final String text;
+  String text;
   Offset position;
   final Color color;
   double fontSize;
+  double rotation;
 
   DrawingText copy() => DrawingText(
         text: text,
         position: position,
         color: color,
         fontSize: fontSize,
+        rotation: rotation,
       );
 
   Map<String, Object> toJson() => <String, Object>{
@@ -70,6 +73,7 @@ class DrawingText {
         'y': position.dy,
         'color': color.toARGB32(),
         'fontSize': fontSize,
+        'rotation': rotation,
       };
 
   factory DrawingText.fromJson(Map<String, dynamic> json) => DrawingText(
@@ -80,6 +84,7 @@ class DrawingText {
         ),
         color: Color(json['color'] as int),
         fontSize: (json['fontSize'] as num).toDouble(),
+        rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
       );
 }
 

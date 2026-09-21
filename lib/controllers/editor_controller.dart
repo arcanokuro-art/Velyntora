@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -155,6 +156,52 @@ class EditorController extends ChangeNotifier {
     } else {
       return false;
     }
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
+  bool rotateSelection(double radians) {
+    if (radians == 0) return false;
+    if (selectedStroke != null && selectedStroke!.points.isNotEmpty) {
+      final previous = List<Offset>.from(selectedStroke!.points);
+      final center = previous.reduce((a, b) => a + b) / previous.length.toDouble();
+      final cosine = math.cos(radians);
+      final sine = math.sin(radians);
+      final next = previous.map((point) {
+        final relative = point - center;
+        return _clampPoint(
+          center +
+              Offset(
+                relative.dx * cosine - relative.dy * sine,
+                relative.dx * sine + relative.dy * cosine,
+              ),
+        );
+      }).toList();
+      selectedStroke!.points
+        ..clear()
+        ..addAll(next);
+      _recordAction(_MoveStrokeAction(selectedStroke!, previous, next));
+    } else if (selectedText != null) {
+      final previous = selectedText!.rotation;
+      final next = previous + radians;
+      selectedText!.rotation = next;
+      _recordAction(_RotateTextAction(selectedText!, previous, next));
+    } else {
+      return false;
+    }
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
+  bool editSelectedText(String value) {
+    final item = selectedText;
+    final next = value.trim();
+    if (item == null || next.isEmpty || next == item.text) return false;
+    final previous = item.text;
+    item.text = next;
+    _recordAction(_EditTextAction(item, previous, next));
     hasUnsavedChanges = true;
     notifyListeners();
     return true;
@@ -606,6 +653,34 @@ class _ScaleTextAction implements _EditAction {
 
   @override
   void redo() => item.fontSize = next;
+}
+
+class _RotateTextAction implements _EditAction {
+  _RotateTextAction(this.item, this.previous, this.next);
+
+  final DrawingText item;
+  final double previous;
+  final double next;
+
+  @override
+  void undo() => item.rotation = previous;
+
+  @override
+  void redo() => item.rotation = next;
+}
+
+class _EditTextAction implements _EditAction {
+  _EditTextAction(this.item, this.previous, this.next);
+
+  final DrawingText item;
+  final String previous;
+  final String next;
+
+  @override
+  void undo() => item.text = previous;
+
+  @override
+  void redo() => item.text = next;
 }
 
 class _ClearFrameAction implements _EditAction {

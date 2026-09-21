@@ -331,4 +331,54 @@ void main() {
     controller.undo();
     expect(controller.texts.single.fontSize, lessThan(240));
   });
+
+  test('rota un trazo alrededor de su centro con deshacer', () {
+    final controller = EditorController(AnimationProject(name: 'Rotacion'));
+    controller.beginStroke(const Offset(0.2, 0.5));
+    controller.extendStroke(const Offset(0.8, 0.5));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.2, 0.5));
+
+    expect(controller.rotateSelection(1.57079632679), isTrue);
+    expect(controller.strokes.single.points.first.dx, closeTo(0.5, 0.000001));
+    expect(controller.strokes.single.points.first.dy, closeTo(0.2, 0.000001));
+    controller.undo();
+    expect(controller.strokes.single.points.first, const Offset(0.2, 0.5));
+  });
+
+  test('rota y serializa un texto seleccionado', () {
+    final controller = EditorController(AnimationProject(name: 'Rotacion'));
+    controller.addText('Girar', const Offset(0.3, 0.3));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.3, 0.3));
+    controller.rotateSelection(0.5);
+
+    expect(controller.texts.single.rotation, 0.5);
+    final restored = AnimationProject.fromJson(controller.project.toJson());
+    expect(restored.layers.single.texts[0]?.single.rotation, 0.5);
+  });
+
+  test('edita texto seleccionado con deshacer y rehacer', () {
+    final controller = EditorController(AnimationProject(name: 'Texto'));
+    controller.addText('Antes', const Offset(0.3, 0.3));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.3, 0.3));
+
+    expect(controller.editSelectedText('Despues'), isTrue);
+    expect(controller.texts.single.text, 'Despues');
+    controller.undo();
+    expect(controller.texts.single.text, 'Antes');
+    controller.redo();
+    expect(controller.texts.single.text, 'Despues');
+  });
+
+  test('rechaza texto editado vacio', () {
+    final controller = EditorController(AnimationProject(name: 'Texto'));
+    controller.addText('Conservar', const Offset(0.3, 0.3));
+    controller.selectTool(DrawingTool.select);
+    controller.selectAt(const Offset(0.3, 0.3));
+
+    expect(controller.editSelectedText('   '), isFalse);
+    expect(controller.texts.single.text, 'Conservar');
+  });
 }

@@ -226,7 +226,7 @@ class _PropertiesPanel extends StatelessWidget {
                     style: const TextStyle(color: VelyntoraColors.muted),
                   ),
                   const SizedBox(height: 12),
-                  Row(children: <Widget>[
+                  Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
                     IconButton.filledTonal(
                       onPressed: controller.selectedStroke != null || controller.selectedText != null
                           ? () => controller.scaleSelection(0.8)
@@ -234,7 +234,6 @@ class _PropertiesPanel extends StatelessWidget {
                       icon: const Icon(Icons.zoom_out_map_rounded),
                       tooltip: 'Reducir selección',
                     ),
-                    const SizedBox(width: 8),
                     IconButton.filledTonal(
                       onPressed: controller.selectedStroke != null || controller.selectedText != null
                           ? () => controller.scaleSelection(1.25)
@@ -242,7 +241,26 @@ class _PropertiesPanel extends StatelessWidget {
                       icon: const Icon(Icons.zoom_in_map_rounded),
                       tooltip: 'Ampliar selección',
                     ),
-                    const Spacer(),
+                    IconButton.filledTonal(
+                      onPressed: controller.selectedStroke != null || controller.selectedText != null
+                          ? () => controller.rotateSelection(-0.261799)
+                          : null,
+                      icon: const Icon(Icons.rotate_left_rounded),
+                      tooltip: 'Girar 15° a la izquierda',
+                    ),
+                    IconButton.filledTonal(
+                      onPressed: controller.selectedStroke != null || controller.selectedText != null
+                          ? () => controller.rotateSelection(0.261799)
+                          : null,
+                      icon: const Icon(Icons.rotate_right_rounded),
+                      tooltip: 'Girar 15° a la derecha',
+                    ),
+                    if (controller.selectedText != null)
+                      IconButton.filledTonal(
+                        onPressed: () => _editSelectedText(context),
+                        icon: const Icon(Icons.edit_rounded),
+                        tooltip: 'Editar texto',
+                      ),
                     IconButton.filledTonal(
                       onPressed: controller.selectedStroke != null || controller.selectedText != null
                           ? controller.deleteSelection
@@ -359,6 +377,30 @@ class _PropertiesPanel extends StatelessWidget {
         const SnackBar(content: Text('El proyecto debe conservar al menos una capa.')),
       );
     }
+  }
+
+  Future<void> _editSelectedText(BuildContext context) async {
+    final selected = controller.selectedText;
+    if (selected == null) return;
+    final textController = TextEditingController(text: selected.text);
+    final value = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Editar texto'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          maxLines: 3,
+          maxLength: 160,
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, textController.text), child: const Text('Guardar')),
+        ],
+      ),
+    );
+    textController.dispose();
+    if (value != null) controller.editSelectedText(value);
   }
 
   Future<void> _renameLayer(BuildContext context) async {
