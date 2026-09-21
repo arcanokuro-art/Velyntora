@@ -60,7 +60,7 @@ jobs:
         run: cp build/app/outputs/flutter-apk/app-release.apk Velyntora-Android-v0.1.0.apk
 
       - name: Publicar APK
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: Velyntora-Android-v0.1.0
           path: Velyntora-Android-v0.1.0.apk
