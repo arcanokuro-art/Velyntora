@@ -72,8 +72,9 @@ class FrameExporter {
     await directory.create(recursive: true);
     final safeName = sanitizeFileName(controller.project.name);
     final frame = (controller.activeFrame + 1).toString().padLeft(4, '0');
-    return File('${directory.path}/${safeName}_fotograma_$frame.png')
-        .writeAsBytes(bytes, flush: true);
+    return File(
+      '${directory.path}/${safeName}_fotograma_$frame.png',
+    ).writeAsBytes(bytes, flush: true);
   }
 
   Future<List<File>> exportPngSequence(EditorController controller) async {
@@ -110,7 +111,9 @@ class FrameExporter {
     final directory = Directory('${documents.path}/Velyntora/Exportaciones');
     await directory.create(recursive: true);
     final safeName = sanitizeFileName(project.name);
-    return File('${directory.path}/$safeName.gif').writeAsBytes(bytes, flush: true);
+    return File(
+      '${directory.path}/$safeName.gif',
+    ).writeAsBytes(bytes, flush: true);
   }
 
   String sanitizeFileName(String value) {

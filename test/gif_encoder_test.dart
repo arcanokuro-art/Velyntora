@@ -33,7 +33,12 @@ void main() {
 
   test('rechaza listas vacias de fotogramas', () {
     expect(
-      () => encoder.encode(width: 2, height: 2, rgbaFrames: const <Uint8List>[], fps: 12),
+      () => encoder.encode(
+        width: 2,
+        height: 2,
+        rgbaFrames: const <Uint8List>[],
+        fps: 12,
+      ),
       throwsArgumentError,
     );
   });

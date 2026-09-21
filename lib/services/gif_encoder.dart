@@ -13,11 +13,17 @@ class GifEncoder {
       throw RangeError('Las dimensiones GIF deben estar entre 1 y 65535.');
     }
     if (rgbaFrames.isEmpty) {
-      throw ArgumentError.value(rgbaFrames, 'rgbaFrames', 'Se requiere al menos un fotograma.');
+      throw ArgumentError.value(
+        rgbaFrames,
+        'rgbaFrames',
+        'Se requiere al menos un fotograma.',
+      );
     }
     final pixelBytes = width * height * 4;
     if (rgbaFrames.any((frame) => frame.length != pixelBytes)) {
-      throw ArgumentError('Cada fotograma debe contener width × height × 4 bytes RGBA.');
+      throw ArgumentError(
+        'Cada fotograma debe contener width × height × 4 bytes RGBA.',
+      );
     }
 
     final output = BytesBuilder(copy: false)
@@ -35,7 +41,8 @@ class GifEncoder {
       final indexed = Uint8List(width * height);
       for (var pixel = 0; pixel < indexed.length; pixel++) {
         final offset = pixel * 4;
-        indexed[pixel] = (rgba[offset] & 0xE0) |
+        indexed[pixel] =
+            (rgba[offset] & 0xE0) |
             ((rgba[offset + 1] & 0xE0) >> 3) |
             (rgba[offset + 2] >> 6);
       }

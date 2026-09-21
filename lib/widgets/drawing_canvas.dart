@@ -24,21 +24,21 @@ class FrameThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => RepaintBoundary(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: ColoredBox(
-            color: Colors.white,
-            child: CustomPaint(
-              painter: AnimationCanvasPainter(
-                controller,
-                showGuides: false,
-                frameOverride: frame,
-              ),
-              child: const SizedBox.expand(),
-            ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: ColoredBox(
+        color: Colors.white,
+        child: CustomPaint(
+          painter: AnimationCanvasPainter(
+            controller,
+            showGuides: false,
+            frameOverride: frame,
           ),
+          child: const SizedBox.expand(),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _DrawingCanvasState extends State<DrawingCanvas> {
@@ -134,45 +134,45 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
                   behavior: HitTestBehavior.opaque,
                   onTapDown: controller.tool == DrawingTool.text
                       ? (details) => _addText(
-                            context,
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
-                            ),
-                          )
+                          context,
+                          _normalize(
+                            details.localPosition,
+                            Size(width, height),
+                          ),
+                        )
                       : controller.tool == DrawingTool.select
-                          ? (details) => controller.selectAt(
-                                _normalize(
-                                  details.localPosition,
-                                  Size(width, height),
-                                ),
-                              )
-                          : null,
+                      ? (details) => controller.selectAt(
+                          _normalize(
+                            details.localPosition,
+                            Size(width, height),
+                          ),
+                        )
+                      : null,
                   onPanStart: movingCanvas
                       ? null
                       : controller.tool == DrawingTool.select
-                          ? (_) => controller.beginSelectionTransform()
-                          : (details) => controller.beginStroke(
-                                _normalize(
-                                  details.localPosition,
-                                  Size(width, height),
-                                ),
-                              ),
+                      ? (_) => controller.beginSelectionTransform()
+                      : (details) => controller.beginStroke(
+                          _normalize(
+                            details.localPosition,
+                            Size(width, height),
+                          ),
+                        ),
                   onPanUpdate: movingCanvas
                       ? null
                       : controller.tool == DrawingTool.select
-                          ? (details) => controller.moveSelection(
-                                Offset(
-                                  details.delta.dx / width,
-                                  details.delta.dy / height,
-                                ),
-                              )
-                          : (details) => controller.extendStroke(
-                                _normalize(
-                                  details.localPosition,
-                                  Size(width, height),
-                                ),
-                              ),
+                      ? (details) => controller.moveSelection(
+                          Offset(
+                            details.delta.dx / width,
+                            details.delta.dy / height,
+                          ),
+                        )
+                      : (details) => controller.extendStroke(
+                          _normalize(
+                            details.localPosition,
+                            Size(width, height),
+                          ),
+                        ),
                   onPanEnd: controller.tool == DrawingTool.select
                       ? (_) => controller.finishSelectionTransform()
                       : null,
@@ -198,8 +198,7 @@ class AnimationCanvasPainter extends CustomPainter {
     this.controller, {
     this.showGuides = true,
     this.frameOverride,
-  })
-      : super(repaint: controller);
+  }) : super(repaint: controller);
 
   final EditorController controller;
   final bool showGuides;
@@ -232,9 +231,7 @@ class AnimationCanvasPainter extends CustomPainter {
         canvas.drawRect(
           Offset.zero & size,
           Paint()
-            ..color = fill.withValues(
-              alpha: fill.a * layer.opacity * opacity,
-            ),
+            ..color = fill.withValues(alpha: fill.a * layer.opacity * opacity),
         );
       }
       final strokes = layer.frames[frame] ?? const <DrawingStroke>[];
@@ -257,7 +254,11 @@ class AnimationCanvasPainter extends CustomPainter {
           path.lineTo(scaled.dx, scaled.dy);
         }
         if (stroke.points.length == 1) {
-          canvas.drawCircle(first, stroke.width / 2, paint..style = PaintingStyle.fill);
+          canvas.drawCircle(
+            first,
+            stroke.width / 2,
+            paint..style = PaintingStyle.fill,
+          );
         } else {
           canvas.drawPath(path, paint);
         }

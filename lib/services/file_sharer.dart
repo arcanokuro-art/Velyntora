@@ -7,7 +7,11 @@ class FileSharer {
 
   Future<void> share(List<File> files, {required String title}) async {
     if (files.isEmpty) {
-      throw ArgumentError.value(files, 'files', 'No hay archivos para compartir.');
+      throw ArgumentError.value(
+        files,
+        'files',
+        'No hay archivos para compartir.',
+      );
     }
     for (final file in files) {
       if (!await file.exists()) {
@@ -20,10 +24,7 @@ class FileSharer {
         text: 'Creado con Velyntora',
         files: files
             .map(
-              (file) => XFile(
-                file.path,
-                mimeType: mimeTypeForPath(file.path),
-              ),
+              (file) => XFile(file.path, mimeType: mimeTypeForPath(file.path)),
             )
             .toList(),
       ),

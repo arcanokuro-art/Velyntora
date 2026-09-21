@@ -8,7 +8,7 @@ import '../services/project_storage.dart';
 
 class EditorController extends ChangeNotifier {
   EditorController(this.project, {ProjectStorage? storage})
-      : storage = storage ?? ProjectStorage();
+    : storage = storage ?? ProjectStorage();
 
   final AnimationProject project;
   final ProjectStorage storage;
@@ -144,7 +144,8 @@ class EditorController extends ChangeNotifier {
     if (factor <= 0) return false;
     if (selectedStroke != null && selectedStroke!.points.isNotEmpty) {
       final previous = List<Offset>.from(selectedStroke!.points);
-      final center = previous.reduce((a, b) => a + b) / previous.length.toDouble();
+      final center =
+          previous.reduce((a, b) => a + b) / previous.length.toDouble();
       final next = previous
           .map((point) => _clampPoint(center + (point - center) * factor))
           .toList();
@@ -170,7 +171,8 @@ class EditorController extends ChangeNotifier {
     if (radians == 0) return false;
     if (selectedStroke != null && selectedStroke!.points.isNotEmpty) {
       final previous = List<Offset>.from(selectedStroke!.points);
-      final center = previous.reduce((a, b) => a + b) / previous.length.toDouble();
+      final center =
+          previous.reduce((a, b) => a + b) / previous.length.toDouble();
       final cosine = math.cos(radians);
       final sine = math.sin(radians);
       final next = previous.map((point) {
@@ -220,10 +222,8 @@ class EditorController extends ChangeNotifier {
     if (notify) notifyListeners();
   }
 
-  Offset _clampPoint(Offset point) => Offset(
-        point.dx.clamp(0, 1).toDouble(),
-        point.dy.clamp(0, 1).toDouble(),
-      );
+  Offset _clampPoint(Offset point) =>
+      Offset(point.dx.clamp(0, 1).toDouble(), point.dy.clamp(0, 1).toDouble());
 
   bool _samePoints(List<Offset> first, List<Offset> second) {
     if (first.length != second.length) return false;
@@ -479,7 +479,10 @@ class EditorController extends ChangeNotifier {
   }
 
   void addLayer() {
-    project.layers.insert(0, AnimationLayer(name: 'Capa ${project.layers.length + 1}'));
+    project.layers.insert(
+      0,
+      AnimationLayer(name: 'Capa ${project.layers.length + 1}'),
+    );
     activeLayer = 0;
     _clearHistory();
     hasUnsavedChanges = true;

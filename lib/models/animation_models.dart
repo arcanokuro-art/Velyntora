@@ -18,32 +18,34 @@ class DrawingStroke {
   final bool erase;
 
   DrawingStroke copy() => DrawingStroke(
-        points: List<Offset>.from(points),
-        color: color,
-        width: width,
-        erase: erase,
-      );
+    points: List<Offset>.from(points),
+    color: color,
+    width: width,
+    erase: erase,
+  );
 
   Map<String, Object> toJson() => <String, Object>{
-        'points': points
-            .map((point) => <String, double>{'x': point.dx, 'y': point.dy})
-            .toList(),
-        'color': color.toARGB32(),
-        'width': width,
-        'erase': erase,
-      };
+    'points': points
+        .map((point) => <String, double>{'x': point.dx, 'y': point.dy})
+        .toList(),
+    'color': color.toARGB32(),
+    'width': width,
+    'erase': erase,
+  };
 
   factory DrawingStroke.fromJson(Map<String, dynamic> json) => DrawingStroke(
-        points: (json['points'] as List<dynamic>)
-            .map((point) => Offset(
-                  (point as Map<String, dynamic>)['x'] as double,
-                  point['y'] as double,
-                ))
-            .toList(),
-        color: Color(json['color'] as int),
-        width: (json['width'] as num).toDouble(),
-        erase: json['erase'] as bool,
-      );
+    points: (json['points'] as List<dynamic>)
+        .map(
+          (point) => Offset(
+            (point as Map<String, dynamic>)['x'] as double,
+            point['y'] as double,
+          ),
+        )
+        .toList(),
+    color: Color(json['color'] as int),
+    width: (json['width'] as num).toDouble(),
+    erase: json['erase'] as bool,
+  );
 }
 
 class DrawingText {
@@ -62,32 +64,32 @@ class DrawingText {
   double rotation;
 
   DrawingText copy() => DrawingText(
-        text: text,
-        position: position,
-        color: color,
-        fontSize: fontSize,
-        rotation: rotation,
-      );
+    text: text,
+    position: position,
+    color: color,
+    fontSize: fontSize,
+    rotation: rotation,
+  );
 
   Map<String, Object> toJson() => <String, Object>{
-        'text': text,
-        'x': position.dx,
-        'y': position.dy,
-        'color': color.toARGB32(),
-        'fontSize': fontSize,
-        'rotation': rotation,
-      };
+    'text': text,
+    'x': position.dx,
+    'y': position.dy,
+    'color': color.toARGB32(),
+    'fontSize': fontSize,
+    'rotation': rotation,
+  };
 
   factory DrawingText.fromJson(Map<String, dynamic> json) => DrawingText(
-        text: json['text'] as String,
-        position: Offset(
-          (json['x'] as num).toDouble(),
-          (json['y'] as num).toDouble(),
-        ),
-        color: Color(json['color'] as int),
-        fontSize: (json['fontSize'] as num).toDouble(),
-        rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
-      );
+    text: json['text'] as String,
+    position: Offset(
+      (json['x'] as num).toDouble(),
+      (json['y'] as num).toDouble(),
+    ),
+    color: Color(json['color'] as int),
+    fontSize: (json['fontSize'] as num).toDouble(),
+    rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 class AnimationLayer {
@@ -108,26 +110,26 @@ class AnimationLayer {
       texts.putIfAbsent(frame, () => <DrawingText>[]);
 
   Map<String, Object> toJson() => <String, Object>{
-        'name': name,
-        'visible': visible,
-        'locked': locked,
-        'opacity': opacity,
-        'fills': fills.map(
-          (frame, color) => MapEntry(frame.toString(), color.toARGB32()),
-        ),
-        'texts': texts.map(
-          (frame, items) => MapEntry(
-            frame.toString(),
-            items.map((item) => item.toJson()).toList(),
-          ),
-        ),
-        'frames': frames.map(
-          (frame, strokes) => MapEntry(
-            frame.toString(),
-            strokes.map((stroke) => stroke.toJson()).toList(),
-          ),
-        ),
-      };
+    'name': name,
+    'visible': visible,
+    'locked': locked,
+    'opacity': opacity,
+    'fills': fills.map(
+      (frame, color) => MapEntry(frame.toString(), color.toARGB32()),
+    ),
+    'texts': texts.map(
+      (frame, items) => MapEntry(
+        frame.toString(),
+        items.map((item) => item.toJson()).toList(),
+      ),
+    ),
+    'frames': frames.map(
+      (frame, strokes) => MapEntry(
+        frame.toString(),
+        strokes.map((stroke) => stroke.toJson()).toList(),
+      ),
+    ),
+  };
 
   factory AnimationLayer.fromJson(Map<String, dynamic> json) {
     final layer = AnimationLayer(name: json['name'] as String)
@@ -137,7 +139,9 @@ class AnimationLayer {
     final savedFrames = json['frames'] as Map<String, dynamic>;
     for (final entry in savedFrames.entries) {
       layer.frames[int.parse(entry.key)] = (entry.value as List<dynamic>)
-          .map((stroke) => DrawingStroke.fromJson(stroke as Map<String, dynamic>))
+          .map(
+            (stroke) => DrawingStroke.fromJson(stroke as Map<String, dynamic>),
+          )
           .toList();
     }
     final savedFills = json['fills'] as Map<String, dynamic>?;
@@ -164,9 +168,9 @@ class AnimationProject {
     int width = 1920,
     int height = 1080,
     this.fps = 12,
-  })  : width = width.clamp(64, 4096).toInt(),
-        height = height.clamp(64, 4096).toInt(),
-        layers = <AnimationLayer>[AnimationLayer(name: 'Capa 1')];
+  }) : width = width.clamp(64, 4096).toInt(),
+       height = height.clamp(64, 4096).toInt(),
+       layers = <AnimationLayer>[AnimationLayer(name: 'Capa 1')];
 
   final String name;
   final int width;
@@ -176,15 +180,15 @@ class AnimationProject {
   final List<AnimationLayer> layers;
 
   Map<String, Object> toJson() => <String, Object>{
-        'format': 'velyntora-project',
-        'version': 2,
-        'name': name,
-        'width': width,
-        'height': height,
-        'fps': fps,
-        'frameCount': frameCount,
-        'layers': layers.map((layer) => layer.toJson()).toList(),
-      };
+    'format': 'velyntora-project',
+    'version': 2,
+    'name': name,
+    'width': width,
+    'height': height,
+    'fps': fps,
+    'frameCount': frameCount,
+    'layers': layers.map((layer) => layer.toJson()).toList(),
+  };
 
   factory AnimationProject.fromJson(Map<String, dynamic> json) {
     if (json['format'] != 'velyntora-project') {

@@ -12,9 +12,7 @@ import 'package:velyntora/widgets/drawing_canvas.dart';
 void main() {
   testWidgets('muestra la galería de Velyntora', (tester) async {
     final storage = _MemoryProjectStorage();
-    await tester.pumpWidget(
-      VelyntoraApp(storage: storage),
-    );
+    await tester.pumpWidget(VelyntoraApp(storage: storage));
     await tester.pumpAndSettle();
     expect(find.text('Velyntora'), findsOneWidget);
     expect(find.text('Tus proyectos'), findsOneWidget);
@@ -29,7 +27,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MaterialApp(home: EditorScreen(project: AnimationProject(name: 'Android'))),
+      MaterialApp(
+        home: EditorScreen(project: AnimationProject(name: 'Android')),
+      ),
     );
     await tester.pump();
     expect(find.text('Android'), findsOneWidget);
@@ -47,7 +47,9 @@ void main() {
     expect(find.textContaining('24 FPS'), findsOneWidget);
   });
 
-  testWidgets('elimina un proyecto confirmado desde la galeria', (tester) async {
+  testWidgets('elimina un proyecto confirmado desde la galeria', (
+    tester,
+  ) async {
     final storage = _MemoryProjectStorage();
     await storage.save(AnimationProject(name: 'Descartar'));
 
@@ -86,9 +88,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: EditorScreen(project: project)));
     await tester.pump();
 
-    final thumbnail = find.byKey(
-      const ValueKey<String>('frame-thumbnail-2'),
-    );
+    final thumbnail = find.byKey(const ValueKey<String>('frame-thumbnail-2'));
     final paint = tester.widget<CustomPaint>(
       find.descendant(of: thumbnail, matching: find.byType(CustomPaint)),
     );
@@ -120,7 +120,9 @@ void main() {
 
   testWidgets('advierte antes de salir con cambios pendientes', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: EditorScreen(project: AnimationProject(name: 'Aviso'))),
+      MaterialApp(
+        home: EditorScreen(project: AnimationProject(name: 'Aviso')),
+      ),
     );
     await tester.tap(find.text('12 FPS'));
     await tester.pumpAndSettle();

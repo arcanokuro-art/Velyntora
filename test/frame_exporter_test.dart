@@ -7,8 +7,10 @@ void main() {
   const exporter = FrameExporter();
 
   test('limpia caracteres no validos del nombre exportado', () {
-    expect(exporter.sanitizeFileName(' Mi animación: 01 / prueba '),
-        'Mi_animación_01_prueba');
+    expect(
+      exporter.sanitizeFileName(' Mi animación: 01 / prueba '),
+      'Mi_animación_01_prueba',
+    );
   });
 
   test('usa un nombre seguro cuando el proyecto no tiene nombre util', () {
@@ -28,7 +30,9 @@ void main() {
     expect(png.take(8).toList(), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
   });
 
-  testWidgets('renderiza otro fotograma sin cambiar la seleccion', (tester) async {
+  testWidgets('renderiza otro fotograma sin cambiar la seleccion', (
+    tester,
+  ) async {
     final controller = EditorController(
       AnimationProject(name: 'Secuencia', width: 64, height: 36),
     )..selectFrame(2);
@@ -72,7 +76,9 @@ void main() {
     expect(exported, expected);
   });
 
-  testWidgets('exporta un proyecto vertical con sus dimensiones', (tester) async {
+  testWidgets('exporta un proyecto vertical con sus dimensiones', (
+    tester,
+  ) async {
     final controller = EditorController(
       AnimationProject(name: 'Vertical', width: 72, height: 128),
     );
@@ -89,7 +95,9 @@ void main() {
     expect(readUint32(20), 128);
   });
 
-  testWidgets('renderiza RGBA completo para el codificador GIF', (tester) async {
+  testWidgets('renderiza RGBA completo para el codificador GIF', (
+    tester,
+  ) async {
     final controller = EditorController(
       AnimationProject(name: 'RGBA', width: 64, height: 64),
     );

@@ -65,8 +65,10 @@ void main() {
 
     expect(controller.deleteFrame(), isTrue);
     expect(controller.project.frameCount, 5);
-    expect(controller.layer.frames[1]?.single.points.single,
-        const Offset(0.8, 0.8));
+    expect(
+      controller.layer.frames[1]?.single.points.single,
+      const Offset(0.8, 0.8),
+    );
   });
 
   test('impide eliminar el ultimo fotograma', () {
@@ -470,11 +472,7 @@ void main() {
   });
 
   test('limita dimensiones que agotarian memoria o serian invalidas', () {
-    final project = AnimationProject(
-      name: 'Limites',
-      width: 1,
-      height: 9000,
-    );
+    final project = AnimationProject(name: 'Limites', width: 1, height: 9000);
 
     expect(project.width, 64);
     expect(project.height, 4096);

@@ -16,6 +16,9 @@ void main() {
   });
 
   test('rechaza una lista vacia antes de abrir el menu del sistema', () async {
-    await expectLater(sharer.share(const <File>[], title: 'Vacío'), throwsArgumentError);
+    await expectLater(
+      sharer.share(const <File>[], title: 'Vacío'),
+      throwsArgumentError,
+    );
   });
 }
