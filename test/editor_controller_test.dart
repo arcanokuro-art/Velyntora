@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:velyntora/controllers/editor_controller.dart';
 import 'package:velyntora/models/animation_models.dart';
+import 'package:velyntora/services/project_storage.dart';
 
 void main() {
   test('agrega y duplica fotogramas', () {
@@ -476,5 +478,20 @@ void main() {
 
     expect(project.width, 64);
     expect(project.height, 4096);
+  });
+
+  test('guardar limpia el indicador de cambios pendientes', () async {
+    final directory = await Directory.systemTemp.createTemp('velyntora_save_');
+    addTearDown(() => directory.delete(recursive: true));
+    final controller = EditorController(
+      AnimationProject(name: 'Autoguardado'),
+      storage: ProjectStorage(rootDirectory: directory),
+    );
+    controller.setFps(24);
+
+    final path = await controller.saveProject();
+
+    expect(File(path).existsSync(), isTrue);
+    expect(controller.hasUnsavedChanges, isFalse);
   });
 }

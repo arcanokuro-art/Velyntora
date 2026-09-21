@@ -102,5 +102,42 @@ void main() {
     expect(painter.frameOverride, 2);
     expect(painter.showGuides, isFalse);
   });
+
+  testWidgets('guarda automaticamente los cambios del editor', (tester) async {
+    final directory = await Directory.systemTemp.createTemp('velyntora_autosave_');
+    addTearDown(() => directory.delete(recursive: true));
+    final storage = ProjectStorage(rootDirectory: directory);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          project: AnimationProject(name: 'Automático'),
+          storage: storage,
+          autoSaveDelay: const Duration(milliseconds: 10),
+        ),
+      ),
+    );
+    await tester.tap(find.text('12 FPS'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('24 FPS'));
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pumpAndSettle();
+
+    expect(await storage.listProjects(), hasLength(1));
+  });
+
+  testWidgets('advierte antes de salir con cambios pendientes', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: EditorScreen(project: AnimationProject(name: 'Aviso'))),
+    );
+    await tester.tap(find.text('12 FPS'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('24 FPS'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Volver a proyectos'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cambios sin guardar'), findsOneWidget);
+    expect(find.text('Guardar y salir'), findsOneWidget);
+  });
 }
 import 'dart:io';

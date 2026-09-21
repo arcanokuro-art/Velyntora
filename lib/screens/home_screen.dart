@@ -271,7 +271,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openEditor(BuildContext context, AnimationProject project) async {
-    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => EditorScreen(project: project)));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EditorScreen(project: project, storage: storage),
+      ),
+    );
     _refreshProjects();
   }
 }

@@ -1,38 +1,65 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../controllers/editor_controller.dart';
 import '../models/animation_models.dart';
 import '../services/frame_exporter.dart';
+import '../services/project_storage.dart';
 import '../theme/velyntora_theme.dart';
 import '../widgets/drawing_canvas.dart';
 
 class EditorScreen extends StatefulWidget {
-  const EditorScreen({super.key, required this.project});
+  const EditorScreen({
+    super.key,
+    required this.project,
+    this.storage,
+    this.autoSaveDelay = const Duration(seconds: 3),
+  });
   final AnimationProject project;
+  final ProjectStorage? storage;
+  final Duration autoSaveDelay;
 
   @override
   State<EditorScreen> createState() => _EditorScreenState();
 }
 
 class _EditorScreenState extends State<EditorScreen> {
-  late final EditorController controller = EditorController(widget.project);
+  late final EditorController controller;
   final FrameExporter exporter = const FrameExporter();
+  Timer? autoSaveTimer;
+  bool allowPop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = EditorController(widget.project, storage: widget.storage);
+    controller.addListener(_scheduleAutoSave);
+  }
 
   @override
   void dispose() {
+    autoSaveTimer?.cancel();
+    controller.removeListener(_scheduleAutoSave);
     controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AnimatedBuilder(
+    return PopScope<void>(
+      canPop: allowPop || !controller.hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _requestClose();
+      },
+      child: Scaffold(
+        body: AnimatedBuilder(
         animation: controller,
         builder: (context, _) => Column(
           children: <Widget>[
             _TopBar(
               controller: controller,
+              onBack: _requestClose,
               onExport: () => _showExportOptions(context),
             ),
             Expanded(
@@ -67,8 +94,57 @@ class _EditorScreenState extends State<EditorScreen> {
             _StatusBar(controller: controller),
           ],
         ),
+        ),
       ),
     );
+  }
+
+  void _scheduleAutoSave() {
+    if (!controller.hasUnsavedChanges || controller.isSaving) return;
+    autoSaveTimer?.cancel();
+    autoSaveTimer = Timer(widget.autoSaveDelay, () async {
+      if (!mounted || !controller.hasUnsavedChanges || controller.isSaving) return;
+      try {
+        await controller.saveProject();
+      } on Object {
+        // El botón Guardar conserva la ruta para mostrar errores al usuario.
+      }
+    });
+  }
+
+  Future<void> _requestClose() async {
+    if (!controller.hasUnsavedChanges) {
+      if (mounted) Navigator.pop(context);
+      return;
+    }
+    final action = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cambios sin guardar'),
+        content: const Text('¿Quieres guardar el proyecto antes de salir?'),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, 'discard'), child: const Text('Descartar')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, 'save'), child: const Text('Guardar y salir')),
+        ],
+      ),
+    );
+    if (action == null || !mounted) return;
+    if (action == 'save') {
+      try {
+        await controller.saveProject();
+      } on Object catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No se pudo guardar: $error')),
+          );
+        }
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() => allowPop = true);
+    Navigator.pop(context);
   }
 
   Future<void> _exportFrame(BuildContext context) async {
@@ -143,8 +219,9 @@ class _EditorScreenState extends State<EditorScreen> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.controller, required this.onExport});
+  const _TopBar({required this.controller, required this.onBack, required this.onExport});
   final EditorController controller;
+  final VoidCallback onBack;
   final VoidCallback onExport;
 
   @override
@@ -156,7 +233,7 @@ class _TopBar extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 14),
             decoration: const BoxDecoration(color: VelyntoraColors.surface, border: Border(bottom: BorderSide(color: VelyntoraColors.border))),
             child: Row(children: <Widget>[
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Volver a proyectos'),
+              IconButton(onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Volver a proyectos'),
               Image.asset('assets/branding/velyntora_icon.png', width: 32, height: 32),
               const SizedBox(width: 8),
               Expanded(child: Text(controller.project.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600))),

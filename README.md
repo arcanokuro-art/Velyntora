@@ -18,6 +18,7 @@ Velyntora es un editor original de animación 2D. Su primera plataforma de prueb
 - Cuadrícula.
 - Transformación de trazos y textos: mover, escalar y rotar.
 - Guardado local de proyectos `.vely`.
+- Guardado automático y aviso antes de descartar cambios.
 - Exportación del fotograma actual o de una secuencia PNG completa.
 - Identidad visual e icono de Velyntora.
 
