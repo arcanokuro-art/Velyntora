@@ -11,10 +11,9 @@ import 'package:velyntora/widgets/drawing_canvas.dart';
 
 void main() {
   testWidgets('muestra la galería de Velyntora', (tester) async {
-    final directory = await Directory.systemTemp.createTemp('velyntora_widget_');
-    addTearDown(() => directory.delete(recursive: true));
+    final storage = _MemoryProjectStorage();
     await tester.pumpWidget(
-      VelyntoraApp(storage: ProjectStorage(rootDirectory: directory)),
+      VelyntoraApp(storage: storage),
     );
     await tester.pumpAndSettle();
     expect(find.text('Velyntora'), findsOneWidget);
@@ -38,9 +37,7 @@ void main() {
   });
 
   testWidgets('la galeria muestra proyectos guardados', (tester) async {
-    final directory = await Directory.systemTemp.createTemp('velyntora_gallery_');
-    addTearDown(() => directory.delete(recursive: true));
-    final storage = ProjectStorage(rootDirectory: directory);
+    final storage = _MemoryProjectStorage();
     await storage.save(AnimationProject(name: 'Proyecto recuperado', fps: 24));
 
     await tester.pumpWidget(MaterialApp(home: HomeScreen(storage: storage)));
@@ -51,10 +48,8 @@ void main() {
   });
 
   testWidgets('elimina un proyecto confirmado desde la galeria', (tester) async {
-    final directory = await Directory.systemTemp.createTemp('velyntora_delete_');
-    addTearDown(() => directory.delete(recursive: true));
-    final storage = ProjectStorage(rootDirectory: directory);
-    final file = await storage.save(AnimationProject(name: 'Descartar'));
+    final storage = _MemoryProjectStorage();
+    await storage.save(AnimationProject(name: 'Descartar'));
 
     await tester.pumpWidget(MaterialApp(home: HomeScreen(storage: storage)));
     await tester.pumpAndSettle();
@@ -63,7 +58,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Eliminar'));
     await tester.pumpAndSettle();
 
-    expect(await file.exists(), isFalse);
+    expect(await storage.listProjects(), isEmpty);
     expect(find.text('Todavía no hay proyectos guardados.'), findsOneWidget);
   });
 
@@ -104,9 +99,7 @@ void main() {
   });
 
   testWidgets('guarda automaticamente los cambios del editor', (tester) async {
-    final directory = await Directory.systemTemp.createTemp('velyntora_autosave_');
-    addTearDown(() => directory.delete(recursive: true));
-    final storage = ProjectStorage(rootDirectory: directory);
+    final storage = _MemoryProjectStorage();
     await tester.pumpWidget(
       MaterialApp(
         home: EditorScreen(
@@ -139,4 +132,27 @@ void main() {
     expect(find.text('Cambios sin guardar'), findsOneWidget);
     expect(find.text('Guardar y salir'), findsOneWidget);
   });
+}
+
+class _MemoryProjectStorage extends ProjectStorage {
+  final Map<String, AnimationProject> _projects = <String, AnimationProject>{};
+
+  @override
+  Future<File> save(AnimationProject project) async {
+    final file = File('/virtual/${project.name}.vely');
+    _projects[file.path] = project;
+    return file;
+  }
+
+  @override
+  Future<AnimationProject> load(File file) async => _projects[file.path]!;
+
+  @override
+  Future<List<File>> listProjects() async =>
+      _projects.keys.map(File.new).toList();
+
+  @override
+  Future<void> delete(File file) async {
+    _projects.remove(file.path);
+  }
 }
