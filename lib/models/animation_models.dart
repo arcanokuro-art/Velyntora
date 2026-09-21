@@ -2,6 +2,8 @@ import 'dart:ui';
 
 enum DrawingTool { brush, eraser, fill, select, text, hand }
 
+enum BrushPreset { pencil, ink, marker }
+
 class DrawingStroke {
   DrawingStroke({
     required this.points,

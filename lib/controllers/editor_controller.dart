@@ -15,6 +15,9 @@ class EditorController extends ChangeNotifier {
   DrawingTool tool = DrawingTool.brush;
   Color color = const Color(0xFF17192B);
   double brushSize = 10;
+  double brushOpacity = 1;
+  double stabilization = 0.25;
+  BrushPreset brushPreset = BrushPreset.ink;
   double zoom = 1;
   int activeFrame = 0;
   int activeLayer = 0;
@@ -241,6 +244,39 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setBrushOpacity(double next) {
+    brushOpacity = next.clamp(0.05, 1).toDouble();
+    notifyListeners();
+  }
+
+  void setStabilization(double next) {
+    stabilization = next.clamp(0, 0.9).toDouble();
+    notifyListeners();
+  }
+
+  void selectBrushPreset(BrushPreset preset) {
+    brushPreset = preset;
+    switch (preset) {
+      case BrushPreset.pencil:
+        brushSize = 3;
+        brushOpacity = 0.9;
+        stabilization = 0.15;
+        break;
+      case BrushPreset.ink:
+        brushSize = 8;
+        brushOpacity = 1;
+        stabilization = 0.35;
+        break;
+      case BrushPreset.marker:
+        brushSize = 24;
+        brushOpacity = 0.45;
+        stabilization = 0.1;
+        break;
+    }
+    tool = DrawingTool.brush;
+    notifyListeners();
+  }
+
   void setZoom(double next) {
     final safeZoom = next.clamp(0.25, 8.0);
     if (zoom == safeZoom) return;
@@ -259,7 +295,7 @@ class EditorController extends ChangeNotifier {
     if (tool != DrawingTool.brush && tool != DrawingTool.eraser) return;
     final stroke = DrawingStroke(
       points: <Offset>[point],
-      color: color,
+      color: color.withValues(alpha: brushOpacity),
       width: brushSize,
       erase: tool == DrawingTool.eraser,
     );
@@ -271,7 +307,10 @@ class EditorController extends ChangeNotifier {
 
   void extendStroke(Offset point) {
     if (strokes.isEmpty) return;
-    strokes.last.points.add(point);
+    final points = strokes.last.points;
+    if (points.isEmpty) return;
+    final smoothed = Offset.lerp(point, points.last, stabilization)!;
+    points.add(smoothed);
     notifyListeners();
   }
 

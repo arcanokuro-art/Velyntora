@@ -381,4 +381,47 @@ void main() {
     expect(controller.editSelectedText('   '), isFalse);
     expect(controller.texts.single.text, 'Conservar');
   });
+
+  test('limita la opacidad del pincel', () {
+    final controller = EditorController(AnimationProject(name: 'Pincel'));
+    controller.setBrushOpacity(4);
+    expect(controller.brushOpacity, 1);
+    controller.setBrushOpacity(0);
+    expect(controller.brushOpacity, 0.05);
+  });
+
+  test('limita la estabilizacion del pincel', () {
+    final controller = EditorController(AnimationProject(name: 'Pincel'));
+    controller.setStabilization(4);
+    expect(controller.stabilization, 0.9);
+    controller.setStabilization(-2);
+    expect(controller.stabilization, 0);
+  });
+
+  test('configura el ajuste de lapiz', () {
+    final controller = EditorController(AnimationProject(name: 'Pincel'));
+    controller.selectBrushPreset(BrushPreset.pencil);
+    expect(controller.brushSize, 3);
+    expect(controller.brushOpacity, 0.9);
+    expect(controller.stabilization, 0.15);
+  });
+
+  test('configura el ajuste de marcador', () {
+    final controller = EditorController(AnimationProject(name: 'Pincel'));
+    controller.selectBrushPreset(BrushPreset.marker);
+    expect(controller.brushSize, 24);
+    expect(controller.brushOpacity, 0.45);
+    expect(controller.tool, DrawingTool.brush);
+  });
+
+  test('aplica opacidad y estabilizacion al trazo', () {
+    final controller = EditorController(AnimationProject(name: 'Pincel'));
+    controller.setBrushOpacity(0.5);
+    controller.setStabilization(0.5);
+    controller.beginStroke(Offset.zero);
+    controller.extendStroke(const Offset(1, 1));
+
+    expect(controller.strokes.single.color.a, closeTo(0.5, 0.01));
+    expect(controller.strokes.single.points.last, const Offset(0.5, 0.5));
+  });
 }

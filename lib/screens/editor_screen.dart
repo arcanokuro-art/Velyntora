@@ -208,7 +208,7 @@ class _PropertiesPanel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: 280,
         color: VelyntoraColors.surface,
-        child: Column(children: <Widget>[
+        child: ListView(children: <Widget>[
           if (controller.tool == DrawingTool.select)
             Padding(
               padding: const EdgeInsets.all(18),
@@ -277,6 +277,19 @@ class _PropertiesPanel extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
               const Text('Pincel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<BrushPreset>(
+                initialValue: controller.brushPreset,
+                decoration: const InputDecoration(labelText: 'Ajuste rápido', isDense: true),
+                items: const <DropdownMenuItem<BrushPreset>>[
+                  DropdownMenuItem(value: BrushPreset.pencil, child: Text('Lápiz')),
+                  DropdownMenuItem(value: BrushPreset.ink, child: Text('Tinta')),
+                  DropdownMenuItem(value: BrushPreset.marker, child: Text('Marcador')),
+                ],
+                onChanged: (value) {
+                  if (value != null) controller.selectBrushPreset(value);
+                },
+              ),
               const SizedBox(height: 16),
               Row(children: <Widget>[
                 Container(width: 42, height: 42, decoration: BoxDecoration(color: controller.color, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
@@ -284,6 +297,16 @@ class _PropertiesPanel extends StatelessWidget {
                 Expanded(child: Text('Tamaño ${controller.brushSize.round()} px')),
               ]),
               Slider(value: controller.brushSize, min: 1, max: 80, onChanged: controller.setBrushSize),
+              Row(children: <Widget>[
+                const Expanded(child: Text('Opacidad')),
+                Text('${(controller.brushOpacity * 100).round()}%'),
+              ]),
+              Slider(value: controller.brushOpacity, min: 0.05, max: 1, onChanged: controller.setBrushOpacity),
+              Row(children: <Widget>[
+                const Expanded(child: Text('Estabilización')),
+                Text('${(controller.stabilization * 100).round()}%'),
+              ]),
+              Slider(value: controller.stabilization, min: 0, max: 0.9, onChanged: controller.setStabilization),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 9,
@@ -330,7 +353,8 @@ class _PropertiesPanel extends StatelessWidget {
               IconButton(onPressed: controller.addLayer, icon: const Icon(Icons.add_rounded), tooltip: 'Añadir capa'),
             ]),
           ),
-          Expanded(
+          SizedBox(
+            height: 180,
             child: ListView.builder(
               itemCount: controller.project.layers.length,
               itemBuilder: (context, index) {
