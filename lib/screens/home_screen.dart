@@ -291,8 +291,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                             onChanged: (value) {
-                              if (value != null)
+                              if (value != null) {
                                 setDialogState(() => resolution = value);
+                              }
                             },
                           ),
                     ),
@@ -315,8 +316,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                                 .toList(),
                             onChanged: (value) {
-                              if (value != null)
+                              if (value != null) {
                                 setDialogState(() => fps = value);
+                              }
                             },
                           ),
                     ),
