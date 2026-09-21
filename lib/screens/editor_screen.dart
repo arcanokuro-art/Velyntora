@@ -33,7 +33,7 @@ class _EditorScreenState extends State<EditorScreen> {
           children: <Widget>[
             _TopBar(
               controller: controller,
-              onExport: () => _exportFrame(context),
+              onExport: () => _showExportOptions(context),
             ),
             Expanded(
               child: LayoutBuilder(
@@ -87,6 +87,59 @@ class _EditorScreenState extends State<EditorScreen> {
       }
     }
   }
+
+  Future<void> _exportSequence(BuildContext context) async {
+    try {
+      final files = await exporter.exportPngSequence(controller);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${files.length} PNG exportados en ${files.first.parent.path}',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo exportar: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showExportOptions(BuildContext context) async {
+    final option = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const ListTile(
+              title: Text('Exportar'),
+              subtitle: Text('Los archivos se guardan sin guías ni piel de cebolla.'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.image_outlined),
+              title: const Text('Fotograma actual'),
+              subtitle: const Text('Una imagen PNG a resolución completa'),
+              onTap: () => Navigator.pop(sheetContext, 'frame'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Secuencia PNG'),
+              subtitle: Text('${controller.project.frameCount} fotogramas numerados'),
+              onTap: () => Navigator.pop(sheetContext, 'sequence'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    if (option == 'frame') await _exportFrame(context);
+    if (option == 'sequence') await _exportSequence(context);
+  }
 }
 
 class _TopBar extends StatelessWidget {
@@ -126,9 +179,9 @@ class _TopBar extends StatelessWidget {
                 ),
               const SizedBox(width: 6),
               if (compact)
-                IconButton.filled(onPressed: onExport, icon: const Icon(Icons.ios_share_rounded), tooltip: 'Exportar PNG')
+                IconButton.filled(onPressed: onExport, icon: const Icon(Icons.ios_share_rounded), tooltip: 'Exportar')
               else
-                FilledButton.icon(onPressed: onExport, icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar PNG')),
+                FilledButton.icon(onPressed: onExport, icon: const Icon(Icons.ios_share_rounded), label: const Text('Exportar')),
             ]),
           );
         },

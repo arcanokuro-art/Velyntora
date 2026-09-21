@@ -165,21 +165,27 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
 }
 
 class AnimationCanvasPainter extends CustomPainter {
-  AnimationCanvasPainter(this.controller, {this.showGuides = true})
+  AnimationCanvasPainter(
+    this.controller, {
+    this.showGuides = true,
+    this.frameOverride,
+  })
       : super(repaint: controller);
 
   final EditorController controller;
   final bool showGuides;
+  final int? frameOverride;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final frame = frameOverride ?? controller.activeFrame;
     canvas.saveLayer(Offset.zero & size, Paint());
     canvas.drawColor(Colors.white, BlendMode.src);
 
-    if (controller.onionSkin && controller.activeFrame > 0) {
-      _paintFrame(canvas, size, controller.activeFrame - 1, opacity: 0.18);
+    if (showGuides && controller.onionSkin && frame > 0) {
+      _paintFrame(canvas, size, frame - 1, opacity: 0.18);
     }
-    _paintFrame(canvas, size, controller.activeFrame);
+    _paintFrame(canvas, size, frame);
 
     if (showGuides && controller.tool == DrawingTool.select) {
       _paintSelection(canvas, size);
