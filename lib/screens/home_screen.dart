@@ -169,7 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshProjects() {
     if (!mounted) return;
-    setState(() => projects = _loadProjects());
+    setState(() {
+      projects = _loadProjects();
+    });
   }
 
   Future<void> _deleteProject(BuildContext context, _StoredProject entry) async {
@@ -209,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: StatefulBuilder(
                       builder: (context, setDialogState) => DropdownButtonFormField<String>(
-                        value: resolution,
+                        initialValue: resolution,
                         decoration: const InputDecoration(labelText: 'Resolución'),
                         items: const <DropdownMenuItem<String>>[
                           DropdownMenuItem(value: '1280x720', child: Text('HD · 1280 × 720')),
@@ -227,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: StatefulBuilder(
                       builder: (context, setDialogState) => DropdownButtonFormField<int>(
-                        value: fps,
+                        initialValue: fps,
                         decoration: const InputDecoration(labelText: 'Velocidad'),
                         items: const <int>[6, 12, 15, 24, 30, 60]
                             .map((value) => DropdownMenuItem<int>(value: value, child: Text('$value FPS')))
@@ -330,6 +332,7 @@ class _ProjectCard extends StatelessWidget {
           ),
         ),
       );
+}
 
 class _NavItem extends StatelessWidget {
   const _NavItem({required this.icon, required this.label, this.active = false});
@@ -345,10 +348,13 @@ class _NavItem extends StatelessWidget {
         color: active ? VelyntoraColors.violet.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: active ? VelyntoraColors.cyan : VelyntoraColors.muted),
-        title: Text(label),
-        dense: true,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          leading: Icon(icon, color: active ? VelyntoraColors.cyan : VelyntoraColors.muted),
+          title: Text(label),
+          dense: true,
+        ),
       ),
     );
   }

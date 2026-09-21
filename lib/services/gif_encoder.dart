@@ -73,6 +73,7 @@ class GifEncoder {
   Uint8List _lzw(Uint8List pixels) {
     const clearCode = 256;
     const endCode = 257;
+    const codeSize = 9;
     final bytes = BytesBuilder(copy: false);
     var currentByte = 0;
     var bitCount = 0;
@@ -87,31 +88,16 @@ class GifEncoder {
       }
     }
 
-    final dictionary = <int, int>{};
-    var codeSize = 9;
-    var nextCode = 258;
     writeCode(clearCode, codeSize);
-    var prefix = pixels.first;
-    for (final symbol in pixels.skip(1)) {
-      final key = (prefix << 8) | symbol;
-      final existing = dictionary[key];
-      if (existing != null) {
-        prefix = existing;
-        continue;
-      }
-      writeCode(prefix, codeSize);
-      if (nextCode < 4096) {
-        dictionary[key] = nextCode++;
-        if (nextCode == (1 << codeSize) && codeSize < 12) codeSize++;
-      } else {
+    var literalsSinceClear = 0;
+    for (final pixel in pixels) {
+      if (literalsSinceClear == 200) {
         writeCode(clearCode, codeSize);
-        dictionary.clear();
-        codeSize = 9;
-        nextCode = 258;
+        literalsSinceClear = 0;
       }
-      prefix = symbol;
+      writeCode(pixel, codeSize);
+      literalsSinceClear++;
     }
-    writeCode(prefix, codeSize);
     writeCode(endCode, codeSize);
     if (bitCount > 0) bytes.addByte(currentByte & 0xFF);
     return bytes.takeBytes();

@@ -1,5 +1,9 @@
 name: Compilar Velyntora APK
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
@@ -9,13 +13,14 @@ on:
 
 jobs:
   build-android:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
 
       - name: Instalar Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -39,7 +44,11 @@ jobs:
         run: flutter analyze
 
       - name: Ejecutar pruebas
-        run: flutter test
+        run: |
+          for test_file in test/*_test.dart; do
+            echo "Ejecutando $test_file"
+            timeout 90s flutter test "$test_file" --reporter expanded --timeout 30s
+          done
 
       - name: Compilar APK
         run: flutter build apk --release

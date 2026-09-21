@@ -285,11 +285,18 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
     if (!context.mounted) return;
-    if (option == 'frame') await _exportFrame(context);
-    if (option == 'sequence') await _exportSequence(context);
-    if (option == 'gif') await _exportGif(context);
-    if (option == 'share-frame') await _shareFrame(context);
-    if (option == 'share-gif') await _shareGif(context);
+    switch (option) {
+      case 'frame':
+        return _exportFrame(context);
+      case 'sequence':
+        return _exportSequence(context);
+      case 'gif':
+        return _exportGif(context);
+      case 'share-frame':
+        return _shareFrame(context);
+      case 'share-gif':
+        return _shareGif(context);
+    }
   }
 }
 
@@ -584,8 +591,10 @@ class _PropertiesPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final layer = controller.project.layers[index];
                 final selected = index == controller.activeLayer;
-                return Container(
-                  color: selected ? VelyntoraColors.violet.withValues(alpha: 0.14) : null,
+                return Material(
+                  color: selected
+                      ? VelyntoraColors.violet.withValues(alpha: 0.14)
+                      : Colors.transparent,
                   child: ListTile(
                     dense: true,
                     onTap: () => controller.selectLayer(index),
@@ -614,8 +623,14 @@ class _PropertiesPanel extends StatelessWidget {
             ]),
           ),
           Slider(value: controller.layer.opacity, min: 0, max: 1, onChanged: controller.setActiveLayerOpacity),
-          SwitchListTile(title: const Text('Papel cebolla'), value: controller.onionSkin, onChanged: controller.setOnionSkin),
-          SwitchListTile(title: const Text('Cuadrícula'), value: controller.gridEnabled, onChanged: controller.setGridEnabled),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile(title: const Text('Papel cebolla'), value: controller.onionSkin, onChanged: controller.setOnionSkin),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile(title: const Text('Cuadrícula'), value: controller.gridEnabled, onChanged: controller.setGridEnabled),
+          ),
         ]),
       );
 
@@ -761,13 +776,20 @@ class _Timeline extends StatelessWidget {
       builder: (dialogContext) => SimpleDialog(
         title: const Text('Velocidad de reproducción'),
         children: <Widget>[
-          for (final value in const <int>[6, 12, 15, 24, 30, 60])
-            RadioListTile<int>(
-              value: value,
-              groupValue: controller.project.fps,
-              title: Text('$value FPS'),
-              onChanged: (selected) => Navigator.pop(dialogContext, selected),
+          RadioGroup<int>(
+            groupValue: controller.project.fps,
+            onChanged: (selected) => Navigator.pop(dialogContext, selected),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                for (final value in const <int>[6, 12, 15, 24, 30, 60])
+                  RadioListTile<int>(
+                    value: value,
+                    title: Text('$value FPS'),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
