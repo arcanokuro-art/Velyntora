@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../controllers/editor_controller.dart';
 import '../models/animation_models.dart';
 import '../services/frame_exporter.dart';
+import '../services/file_sharer.dart';
 import '../services/project_storage.dart';
 import '../theme/velyntora_theme.dart';
 import '../widgets/drawing_canvas.dart';
@@ -14,10 +16,12 @@ class EditorScreen extends StatefulWidget {
     super.key,
     required this.project,
     this.storage,
+    this.fileSharer = const FileSharer(),
     this.autoSaveDelay = const Duration(seconds: 3),
   });
   final AnimationProject project;
   final ProjectStorage? storage;
+  final FileSharer fileSharer;
   final Duration autoSaveDelay;
 
   @override
@@ -202,6 +206,38 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  Future<void> _shareFrame(BuildContext context) async {
+    try {
+      final file = await exporter.exportCurrentFrame(controller);
+      await widget.fileSharer.share(
+        <File>[file],
+        title: 'Fotograma de ${controller.project.name}',
+      );
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo compartir: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareGif(BuildContext context) async {
+    try {
+      final file = await exporter.exportAnimatedGif(controller);
+      await widget.fileSharer.share(
+        <File>[file],
+        title: 'Animación ${controller.project.name}',
+      );
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo compartir: $error')),
+        );
+      }
+    }
+  }
+
   Future<void> _showExportOptions(BuildContext context) async {
     final option = await showModalBottomSheet<String>(
       context: context,
@@ -231,6 +267,19 @@ class _EditorScreenState extends State<EditorScreen> {
               subtitle: Text('${controller.project.frameCount} fotogramas a ${controller.project.fps} FPS'),
               onTap: () => Navigator.pop(sheetContext, 'gif'),
             ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: const Text('Compartir fotograma'),
+              subtitle: const Text('Abre el menú para enviarlo a otra aplicación'),
+              onTap: () => Navigator.pop(sheetContext, 'share-frame'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.share_rounded),
+              title: const Text('Compartir GIF'),
+              subtitle: const Text('Genera la animación y abre el menú de Android'),
+              onTap: () => Navigator.pop(sheetContext, 'share-gif'),
+            ),
           ],
         ),
       ),
@@ -239,6 +288,8 @@ class _EditorScreenState extends State<EditorScreen> {
     if (option == 'frame') await _exportFrame(context);
     if (option == 'sequence') await _exportSequence(context);
     if (option == 'gif') await _exportGif(context);
+    if (option == 'share-frame') await _shareFrame(context);
+    if (option == 'share-gif') await _shareGif(context);
   }
 }
 
