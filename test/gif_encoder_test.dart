@@ -23,8 +23,9 @@ void main() {
     expect(bytes.last, 0x3B);
     expect(codec, isNotNull);
     expect(codec!.frameCount, 2);
-    final frame = await codec.getNextFrame();
-    expect(frame.image.width, 2);
+    final frame = await tester.runAsync(codec.getNextFrame);
+    expect(frame, isNotNull);
+    expect(frame!.image.width, 2);
     expect(frame.image.height, 1);
     frame.image.dispose();
     codec.dispose();
