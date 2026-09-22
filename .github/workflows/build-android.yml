@@ -1,5 +1,8 @@
 name: Compilar Velyntora APK
 
+permissions:
+  contents: write
+
 concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
@@ -66,3 +69,16 @@ jobs:
           path: Velyntora-Android-v0.1.0.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Crear GitHub Release v0.1.0
+        if: >-
+          github.event_name == 'push' &&
+          contains(github.event.head_commit.message, 'release: publish v0.1.0')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0
+          name: Velyntora v0.1.0
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          files: Velyntora-Android-v0.1.0.apk
