@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:velyntora/controllers/editor_controller.dart';
 import 'package:velyntora/main.dart';
 import 'package:velyntora/models/animation_models.dart';
 import 'package:velyntora/screens/editor_screen.dart';
@@ -133,6 +134,56 @@ void main() {
 
     expect(find.text('Cambios sin guardar'), findsOneWidget);
     expect(find.text('Guardar y salir'), findsOneWidget);
+  });
+
+  testWidgets('el lienzo tolera un ancho disponible de cero', (tester) async {
+    final controller = EditorController(AnimationProject(name: 'Sin ancho'));
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 0,
+          height: 200,
+          child: DrawingCanvas(controller: controller),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('el lienzo tolera un alto disponible de cero', (tester) async {
+    final controller = EditorController(AnimationProject(name: 'Sin alto'));
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 200,
+          height: 0,
+          child: DrawingCanvas(controller: controller),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('el lienzo tolera restricciones no acotadas', (tester) async {
+    final controller = EditorController(AnimationProject(name: 'Sin límites'));
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[DrawingCanvas(controller: controller)],
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
   });
 }
 
