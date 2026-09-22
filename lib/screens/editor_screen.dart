@@ -712,12 +712,15 @@ class _PropertiesPanel extends StatelessWidget {
                   max: 0.9,
                   onChanged: controller.setStabilization,
                 ),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Presión de tableta'),
-                  subtitle: const Text('Varía el grosor con el lápiz óptico'),
-                  value: controller.pressureEnabled,
-                  onChanged: controller.setPressureEnabled,
+                Material(
+                  type: MaterialType.transparency,
+                  child: SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Presión de tableta'),
+                    subtitle: const Text('Varía el grosor con el lápiz óptico'),
+                    value: controller.pressureEnabled,
+                    onChanged: controller.setPressureEnabled,
+                  ),
                 ),
                 if (controller.pressureEnabled) ...<Widget>[
                   Row(
