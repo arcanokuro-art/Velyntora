@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:velyntora/controllers/editor_controller.dart';
 import 'package:velyntora/models/animation_models.dart';
 import 'package:velyntora/services/frame_exporter.dart';
+import 'package:velyntora/services/video_encoder.dart';
 
 void main() {
   const exporter = FrameExporter();
@@ -109,4 +112,97 @@ void main() {
     expect(bytes, isNotNull);
     expect(bytes, hasLength(64 * 64 * 4));
   });
+
+  testWidgets('exporta todos los fotogramas a MP4 y limpia los temporales', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync('velyntora_mp4_');
+    addTearDown(() {
+      if (root.existsSync()) root.deleteSync(recursive: true);
+    });
+    final encoder = _FakeVideoEncoder();
+    final mp4Exporter = FrameExporter(
+      videoEncoder: encoder,
+      documentsDirectory: Directory('${root.path}/documents'),
+      temporaryDirectory: Directory('${root.path}/temporary'),
+    );
+    final project = AnimationProject(
+      name: 'Mi película',
+      width: 64,
+      height: 64,
+      fps: 24,
+    )..frameCount = 2;
+
+    final file = await tester.runAsync(
+      () => mp4Exporter.exportMp4(EditorController(project)),
+    );
+
+    expect(file, isNotNull);
+    expect(file!.path, endsWith('Mi_película.mp4'));
+    expect(file.lengthSync(), greaterThan(0));
+    expect(encoder.frameCount, 2);
+    expect(encoder.fps, 24);
+    expect(encoder.width, 64);
+    expect(encoder.height, 64);
+    expect(Directory(encoder.sequenceDirectory!).existsSync(), isFalse);
+  });
+
+  testWidgets('limpia los temporales cuando falla el codificador MP4', (
+    tester,
+  ) async {
+    final root = Directory.systemTemp.createTempSync('velyntora_mp4_error_');
+    addTearDown(() {
+      if (root.existsSync()) root.deleteSync(recursive: true);
+    });
+    final encoder = _FakeVideoEncoder(fail: true);
+    final mp4Exporter = FrameExporter(
+      videoEncoder: encoder,
+      documentsDirectory: Directory('${root.path}/documents'),
+      temporaryDirectory: Directory('${root.path}/temporary'),
+    );
+    final project = AnimationProject(name: 'Error', width: 64, height: 64)
+      ..frameCount = 1;
+
+    await tester.runAsync(
+      () => expectLater(
+        mp4Exporter.exportMp4(EditorController(project)),
+        throwsStateError,
+      ),
+    );
+
+    expect(Directory(encoder.sequenceDirectory!).existsSync(), isFalse);
+  });
+}
+
+class _FakeVideoEncoder extends VideoEncoder {
+  _FakeVideoEncoder({this.fail = false});
+
+  final bool fail;
+  int frameCount = 0;
+  int? fps;
+  int? width;
+  int? height;
+  String? sequenceDirectory;
+
+  @override
+  Future<void> encode({
+    required String inputPattern,
+    required String outputPath,
+    required int fps,
+    required int width,
+    required int height,
+    required List<MediaAsset> audioAssets,
+  }) async {
+    sequenceDirectory = File(inputPattern).parent.path;
+    frameCount = Directory(sequenceDirectory!)
+        .listSync()
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.png'))
+        .length;
+    this.fps = fps;
+    this.width = width;
+    this.height = height;
+    if (fail) throw StateError('fallo simulado');
+    await File(outputPath).writeAsBytes(<int>[0, 0, 0, 24, 102, 116, 121, 112]);
+  }
 }

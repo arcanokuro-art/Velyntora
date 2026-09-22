@@ -7,9 +7,18 @@ import 'package:path_provider/path_provider.dart';
 import '../controllers/editor_controller.dart';
 import '../widgets/drawing_canvas.dart';
 import 'gif_encoder.dart';
+import 'video_encoder.dart';
 
 class FrameExporter {
-  const FrameExporter();
+  const FrameExporter({
+    this.videoEncoder = const FfmpegVideoEncoder(),
+    this.documentsDirectory,
+    this.temporaryDirectory,
+  });
+
+  final VideoEncoder videoEncoder;
+  final Directory? documentsDirectory;
+  final Directory? temporaryDirectory;
 
   Future<Uint8List> renderPng(EditorController controller) async {
     return renderFramePng(controller, controller.activeFrame);
@@ -116,6 +125,53 @@ class FrameExporter {
     return File(
       '${directory.path}/$safeName.gif',
     ).writeAsBytes(bytes, flush: true);
+  }
+
+  Future<File> exportMp4(EditorController controller) async {
+    final project = controller.project;
+    final temporary = temporaryDirectory ?? await getTemporaryDirectory();
+    final sequenceDirectory = Directory(
+      '${temporary.path}/Velyntora/mp4_${DateTime.now().microsecondsSinceEpoch}',
+    );
+    await sequenceDirectory.create(recursive: true);
+    try {
+      for (var frame = 0; frame < project.frameCount; frame++) {
+        final bytes = await renderFramePng(controller, frame);
+        final number = (frame + 1).toString().padLeft(6, '0');
+        await File(
+          '${sequenceDirectory.path}/frame_$number.png',
+        ).writeAsBytes(bytes, flush: true);
+      }
+
+      final documents =
+          documentsDirectory ?? await getApplicationDocumentsDirectory();
+      final exportDirectory = Directory(
+        '${documents.path}/Velyntora/Exportaciones',
+      );
+      await exportDirectory.create(recursive: true);
+      final output = File(
+        '${exportDirectory.path}/${sanitizeFileName(project.name)}.mp4',
+      );
+      if (await output.exists()) await output.delete();
+      await videoEncoder.encode(
+        inputPattern: '${sequenceDirectory.path}/frame_%06d.png',
+        outputPath: output.path,
+        fps: project.fps,
+        width: project.width,
+        height: project.height,
+        audioAssets: project.mediaAssets
+            .where((asset) => asset.type == MediaType.audio)
+            .toList(),
+      );
+      if (!await output.exists() || await output.length() == 0) {
+        throw StateError('El codificador no produjo un archivo MP4 válido.');
+      }
+      return output;
+    } finally {
+      if (await sequenceDirectory.exists()) {
+        await sequenceDirectory.delete(recursive: true);
+      }
+    }
   }
 
   String sanitizeFileName(String value) {
