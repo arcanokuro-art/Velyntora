@@ -34,8 +34,23 @@ class ProjectStorage {
   }
 
   Future<AnimationProject> load(File file) async {
-    final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-    return AnimationProject.fromJson(json);
+    final contents = await file.readAsString();
+    try {
+      final decoded = jsonDecode(contents);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException(
+          'El archivo no contiene un proyecto de Velyntora válido.',
+        );
+      }
+      return AnimationProject.fromJson(decoded);
+    } on FormatException {
+      rethrow;
+    } on Object catch (error) {
+      throw FormatException(
+        'El proyecto de Velyntora está dañado o es incompatible.',
+        error,
+      );
+    }
   }
 
   Future<List<File>> listProjects() async {

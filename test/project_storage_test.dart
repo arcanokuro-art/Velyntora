@@ -46,4 +46,27 @@ void main() {
 
     expect(await external.exists(), isTrue);
   });
+
+  test('rechaza JSON malformado como proyecto dañado', () async {
+    final file = File('${root.path}${Platform.pathSeparator}dañado.vely');
+    await file.writeAsString('{esto no es JSON');
+
+    await expectLater(storage.load(file), throwsFormatException);
+  });
+
+  test('rechaza un JSON que no sea un objeto de proyecto', () async {
+    final file = File('${root.path}${Platform.pathSeparator}lista.vely');
+    await file.writeAsString('[1, 2, 3]');
+
+    await expectLater(storage.load(file), throwsFormatException);
+  });
+
+  test('normaliza campos incompatibles como error de formato', () async {
+    final file = File('${root.path}${Platform.pathSeparator}incompleto.vely');
+    await file.writeAsString(
+      '{"format":"velyntora-project","name":42,"layers":[]}',
+    );
+
+    await expectLater(storage.load(file), throwsFormatException);
+  });
 }
