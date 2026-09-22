@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/material.dart';
@@ -254,6 +255,29 @@ class AnimationCanvasPainter extends CustomPainter {
   }
 
   void _paintFrame(Canvas canvas, Size size, int frame, {double opacity = 1}) {
+    for (final asset in controller.project.mediaAssets) {
+      if (asset.type != MediaType.image || !asset.isVisibleAt(frame)) continue;
+      final image = controller.imageFor(asset);
+      if (image == null) continue;
+      final scale = math.min(
+        size.width / image.width,
+        size.height / image.height,
+      );
+      final width = image.width * scale;
+      final height = image.height * scale;
+      final destination = Rect.fromLTWH(
+        (size.width - width) / 2,
+        (size.height - height) / 2,
+        width,
+        height,
+      );
+      canvas.drawImageRect(
+        image,
+        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+        destination,
+        Paint()..color = Colors.white.withValues(alpha: opacity),
+      );
+    }
     for (final layer in controller.project.layers.reversed) {
       if (!layer.visible) continue;
       final fill = layer.fills[frame];
