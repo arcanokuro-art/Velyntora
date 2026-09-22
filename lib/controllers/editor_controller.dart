@@ -17,6 +17,8 @@ class EditorController extends ChangeNotifier {
   double brushSize = 10;
   double brushOpacity = 1;
   double stabilization = 0.25;
+  bool pressureEnabled = true;
+  double pressureSensitivity = 1;
   BrushPreset brushPreset = BrushPreset.ink;
   double zoom = 1;
   int activeFrame = 0;
@@ -258,6 +260,16 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPressureEnabled(bool value) {
+    pressureEnabled = value;
+    notifyListeners();
+  }
+
+  void setPressureSensitivity(double value) {
+    pressureSensitivity = value.clamp(0.25, 2).toDouble();
+    notifyListeners();
+  }
+
   void selectBrushPreset(BrushPreset preset) {
     brushPreset = preset;
     switch (preset) {
@@ -290,7 +302,7 @@ class EditorController extends ChangeNotifier {
 
   void resetZoom() => setZoom(1);
 
-  void beginStroke(Offset point) {
+  void beginStroke(Offset point, {double pressure = 1}) {
     if (layer.locked || !layer.visible) return;
     if (tool == DrawingTool.fill) {
       fillRegion(point);
@@ -302,6 +314,7 @@ class EditorController extends ChangeNotifier {
       color: color.withValues(alpha: brushOpacity),
       width: brushSize,
       erase: tool == DrawingTool.eraser,
+      pressures: <double>[_effectivePressure(pressure)],
     );
     strokes.add(stroke);
     _recordAction(_StrokeAction(strokes, stroke));
@@ -309,13 +322,20 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void extendStroke(Offset point) {
+  void extendStroke(Offset point, {double pressure = 1}) {
     if (strokes.isEmpty) return;
     final points = strokes.last.points;
     if (points.isEmpty) return;
     final smoothed = Offset.lerp(point, points.last, stabilization)!;
     points.add(smoothed);
+    strokes.last.pressures.add(_effectivePressure(pressure));
     notifyListeners();
+  }
+
+  double _effectivePressure(double pressure) {
+    if (!pressureEnabled) return 1;
+    final normalized = pressure.clamp(0, 1).toDouble();
+    return (0.15 + normalized * 0.85 * pressureSensitivity).clamp(0.15, 1);
   }
 
   void undo() {
