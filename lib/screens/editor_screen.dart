@@ -712,6 +712,32 @@ class _PropertiesPanel extends StatelessWidget {
                   max: 0.9,
                   onChanged: controller.setStabilization,
                 ),
+                Material(
+                  type: MaterialType.transparency,
+                  child: SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Presión de tableta'),
+                    subtitle: const Text('Varía el grosor con el lápiz óptico'),
+                    value: controller.pressureEnabled,
+                    onChanged: controller.setPressureEnabled,
+                  ),
+                ),
+                if (controller.pressureEnabled) ...<Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Expanded(child: Text('Sensibilidad')),
+                      Text(
+                        '${(controller.pressureSensitivity * 100).round()}%',
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    value: controller.pressureSensitivity,
+                    min: 0.25,
+                    max: 2,
+                    onChanged: controller.setPressureSensitivity,
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 9,

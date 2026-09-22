@@ -537,6 +537,64 @@ void main() {
     expect(controller.strokes.single.points.last, const Offset(0.5, 0.5));
   });
 
+  test('registra la presión variable de un lápiz óptico', () {
+    final controller = EditorController(AnimationProject(name: 'Presión'));
+    controller.setStabilization(0);
+    controller.beginStroke(Offset.zero, pressure: 0);
+    controller.extendStroke(const Offset(1, 1), pressure: 1);
+
+    expect(controller.strokes.single.pressures.first, 0.15);
+    expect(controller.strokes.single.pressures.last, 1);
+  });
+
+  test('puede desactivar la variación por presión', () {
+    final controller = EditorController(AnimationProject(name: 'Presión'));
+    controller.setPressureEnabled(false);
+    controller.beginStroke(Offset.zero, pressure: 0.1);
+    controller.extendStroke(const Offset(1, 1), pressure: 0.9);
+
+    expect(controller.strokes.single.pressures, <double>[1, 1]);
+  });
+
+  test('limita y aplica la sensibilidad de presión', () {
+    final controller = EditorController(AnimationProject(name: 'Presión'));
+    controller.setPressureSensitivity(0);
+    expect(controller.pressureSensitivity, 0.25);
+    controller.beginStroke(Offset.zero, pressure: 1);
+    expect(controller.strokes.single.pressures.single, closeTo(0.3625, 0.0001));
+
+    controller.setPressureSensitivity(5);
+    expect(controller.pressureSensitivity, 2);
+  });
+
+  test('serializa y recupera la presión de cada punto', () {
+    final controller = EditorController(AnimationProject(name: 'Presión'));
+    controller.beginStroke(const Offset(0.2, 0.2), pressure: 0.4);
+    controller.extendStroke(const Offset(0.8, 0.8), pressure: 0.9);
+
+    final restored = AnimationProject.fromJson(controller.project.toJson());
+    final pressures = restored.layers.single.frames[0]!.single.pressures;
+    expect(pressures, hasLength(2));
+    expect(pressures.first, closeTo(0.49, 0.0001));
+    expect(pressures.last, closeTo(0.915, 0.0001));
+  });
+
+  test('recupera trazos antiguos que no contienen presión', () {
+    final project = AnimationProject(name: 'Anterior');
+    final controller = EditorController(project);
+    controller.beginStroke(const Offset(0.5, 0.5));
+    final json = project.toJson();
+    final layers = json['layers'] as List<Map<String, Object>>;
+    final frames = layers.single['frames'] as Map<String, Object>;
+    final strokes = frames['0'] as List<Map<String, Object>>;
+    strokes.single.remove('pressures');
+
+    final restored = AnimationProject.fromJson(json);
+    final stroke = restored.layers.single.frames[0]!.single;
+    expect(stroke.pressures, isEmpty);
+    expect(stroke.pressureAt(0), 1);
+  });
+
   test('configura los FPS y marca el proyecto como modificado', () {
     final controller = EditorController(AnimationProject(name: 'FPS'));
 
