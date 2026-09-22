@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -36,6 +38,7 @@ class EditorController extends ChangeNotifier {
   DrawingText? selectedText;
   List<Offset>? _selectionStartPoints;
   Offset? _selectionStartTextPosition;
+  final Map<String, ui.Image> mediaImages = <String, ui.Image>{};
 
   AnimationLayer get layer => project.layers[activeLayer];
   List<DrawingStroke> get strokes => layer.strokesAt(activeFrame);
@@ -46,6 +49,46 @@ class EditorController extends ChangeNotifier {
   bool get canRedo => _redoHistory.isNotEmpty;
   Duration get playbackInterval =>
       Duration(milliseconds: (1000 / project.fps).round());
+
+  ui.Image? imageFor(MediaAsset asset) => mediaImages[asset.id];
+
+  Future<void> addMediaAsset(MediaAsset asset) async {
+    project.mediaAssets.add(asset);
+    if (asset.type == MediaType.image) await _loadImage(asset);
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  Future<void> loadMediaImages() async {
+    for (final asset in project.mediaAssets) {
+      if (asset.type == MediaType.image && !mediaImages.containsKey(asset.id)) {
+        await _loadImage(asset);
+      }
+    }
+  }
+
+  Future<void> _loadImage(MediaAsset asset) async {
+    final file = File(asset.path);
+    if (!await file.exists()) return;
+    final codec = await ui.instantiateImageCodec(await file.readAsBytes());
+    try {
+      final frame = await codec.getNextFrame();
+      mediaImages.remove(asset.id)?.dispose();
+      mediaImages[asset.id] = frame.image;
+    } finally {
+      codec.dispose();
+    }
+  }
+
+  bool removeMediaAsset(String id) {
+    final index = project.mediaAssets.indexWhere((asset) => asset.id == id);
+    if (index < 0) return false;
+    project.mediaAssets.removeAt(index);
+    mediaImages.remove(id)?.dispose();
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
 
   void selectTool(DrawingTool next) {
     tool = next;
@@ -703,6 +746,10 @@ class EditorController extends ChangeNotifier {
   @override
   void dispose() {
     _playbackTimer?.cancel();
+    for (final image in mediaImages.values) {
+      image.dispose();
+    }
+    mediaImages.clear();
     super.dispose();
   }
 }
