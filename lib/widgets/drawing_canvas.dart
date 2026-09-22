@@ -243,6 +243,27 @@ class AnimationCanvasPainter extends CustomPainter {
             ..color = fill.withValues(alpha: fill.a * layer.opacity * opacity),
         );
       }
+      final regionFills =
+          layer.regionFills[frame] ?? const <DrawingRegionFill>[];
+      for (final region in regionFills) {
+        if (region.boundary.length < 3) continue;
+        final path = Path();
+        final first = _scale(region.boundary.first, size);
+        path.moveTo(first.dx, first.dy);
+        for (final point in region.boundary.skip(1)) {
+          final scaled = _scale(point, size);
+          path.lineTo(scaled.dx, scaled.dy);
+        }
+        path.close();
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = region.color.withValues(
+              alpha: region.color.a * layer.opacity * opacity,
+            )
+            ..style = PaintingStyle.fill,
+        );
+      }
       final strokes = layer.frames[frame] ?? const <DrawingStroke>[];
       for (final stroke in strokes) {
         if (stroke.points.isEmpty) continue;

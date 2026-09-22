@@ -159,7 +159,113 @@ void main() {
     expect(controller.layer.fills[1], controller.color);
     final restored = AnimationProject.fromJson(controller.project.toJson());
     expect(restored.layers.single.fills[1], controller.color);
-    expect(restored.toJson()['version'], 2);
+    expect(restored.toJson()['version'], 3);
+  });
+
+  test('rellena solamente el interior de un contorno cerrado', () {
+    final controller = EditorController(AnimationProject(name: 'Región'));
+    controller.setStabilization(0);
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.extendStroke(const Offset(0.8, 0.2));
+    controller.extendStroke(const Offset(0.8, 0.8));
+    controller.extendStroke(const Offset(0.2, 0.8));
+    controller.extendStroke(const Offset(0.2, 0.2));
+    controller.selectTool(DrawingTool.fill);
+    controller.setColor(const Color(0xFFFF3366));
+    controller.selectTool(DrawingTool.fill);
+
+    expect(controller.fillRegion(const Offset(0.5, 0.5)), isTrue);
+    expect(controller.regionFills, hasLength(1));
+    expect(controller.regionFills.single.color, const Color(0xFFFF3366));
+    expect(controller.layer.fills[0], isNull);
+  });
+
+  test('un relleno regional permite deshacer y rehacer', () {
+    final controller = EditorController(AnimationProject(name: 'Región'));
+    controller.setStabilization(0);
+    controller.beginStroke(const Offset(0.1, 0.1));
+    controller.extendStroke(const Offset(0.9, 0.1));
+    controller.extendStroke(const Offset(0.9, 0.9));
+    controller.extendStroke(const Offset(0.1, 0.9));
+    controller.extendStroke(const Offset(0.1, 0.1));
+
+    expect(controller.fillRegion(const Offset(0.5, 0.5)), isTrue);
+    controller.undo();
+    expect(controller.regionFills, isEmpty);
+    controller.redo();
+    expect(controller.regionFills, hasLength(1));
+  });
+
+  test('duplica y serializa los rellenos regionales', () {
+    final controller = EditorController(AnimationProject(name: 'Región'));
+    controller.setStabilization(0);
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.extendStroke(const Offset(0.8, 0.2));
+    controller.extendStroke(const Offset(0.8, 0.8));
+    controller.extendStroke(const Offset(0.2, 0.8));
+    controller.extendStroke(const Offset(0.2, 0.2));
+    controller.fillRegion(const Offset(0.5, 0.5));
+    controller.addFrame(duplicate: true);
+
+    expect(controller.regionFills, hasLength(1));
+    final restored = AnimationProject.fromJson(controller.project.toJson());
+    expect(restored.layers.single.regionFills[1], hasLength(1));
+  });
+
+  test('usa el contorno cerrado mas pequeno cuando hay regiones anidadas', () {
+    final controller = EditorController(AnimationProject(name: 'Región'));
+    controller.setStabilization(0);
+    for (final points in <List<Offset>>[
+      const <Offset>[
+        Offset(0.1, 0.1),
+        Offset(0.9, 0.1),
+        Offset(0.9, 0.9),
+        Offset(0.1, 0.9),
+        Offset(0.1, 0.1),
+      ],
+      const <Offset>[
+        Offset(0.3, 0.3),
+        Offset(0.7, 0.3),
+        Offset(0.7, 0.7),
+        Offset(0.3, 0.7),
+        Offset(0.3, 0.3),
+      ],
+    ]) {
+      controller.beginStroke(points.first);
+      for (final point in points.skip(1)) {
+        controller.extendStroke(point);
+      }
+    }
+
+    expect(controller.fillRegion(const Offset(0.5, 0.5)), isTrue);
+    expect(
+      controller.regionFills.single.boundary.first,
+      const Offset(0.3, 0.3),
+    );
+  });
+
+  test('conserva el relleno de fondo si no existe una region cerrada', () {
+    final controller = EditorController(AnimationProject(name: 'Fondo'));
+
+    expect(controller.fillRegion(const Offset(0.5, 0.5)), isFalse);
+    expect(controller.layer.fills[0], controller.color);
+    expect(controller.regionFills, isEmpty);
+  });
+
+  test('limpiar fotograma elimina y recupera rellenos regionales', () {
+    final controller = EditorController(AnimationProject(name: 'Región'));
+    controller.setStabilization(0);
+    controller.beginStroke(const Offset(0.2, 0.2));
+    controller.extendStroke(const Offset(0.8, 0.2));
+    controller.extendStroke(const Offset(0.8, 0.8));
+    controller.extendStroke(const Offset(0.2, 0.8));
+    controller.extendStroke(const Offset(0.2, 0.2));
+    controller.fillRegion(const Offset(0.5, 0.5));
+
+    controller.clearFrame();
+    expect(controller.regionFills, isEmpty);
+    controller.undo();
+    expect(controller.regionFills, hasLength(1));
   });
 
   test('mantiene compatibilidad con proyectos sin rellenos', () {
