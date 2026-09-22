@@ -92,6 +92,36 @@ class DrawingText {
   );
 }
 
+class DrawingRegionFill {
+  DrawingRegionFill({required this.boundary, required this.color});
+
+  final List<Offset> boundary;
+  final Color color;
+
+  DrawingRegionFill copy() =>
+      DrawingRegionFill(boundary: List<Offset>.from(boundary), color: color);
+
+  Map<String, Object> toJson() => <String, Object>{
+    'boundary': boundary
+        .map((point) => <String, double>{'x': point.dx, 'y': point.dy})
+        .toList(),
+    'color': color.toARGB32(),
+  };
+
+  factory DrawingRegionFill.fromJson(Map<String, dynamic> json) =>
+      DrawingRegionFill(
+        boundary: (json['boundary'] as List<dynamic>)
+            .map(
+              (point) => Offset(
+                ((point as Map<String, dynamic>)['x'] as num).toDouble(),
+                (point['y'] as num).toDouble(),
+              ),
+            )
+            .toList(),
+        color: Color(json['color'] as int),
+      );
+}
+
 class AnimationLayer {
   AnimationLayer({required this.name});
 
@@ -101,6 +131,8 @@ class AnimationLayer {
   double opacity = 1;
   final Map<int, List<DrawingStroke>> frames = <int, List<DrawingStroke>>{};
   final Map<int, Color> fills = <int, Color>{};
+  final Map<int, List<DrawingRegionFill>> regionFills =
+      <int, List<DrawingRegionFill>>{};
   final Map<int, List<DrawingText>> texts = <int, List<DrawingText>>{};
 
   List<DrawingStroke> strokesAt(int frame) =>
@@ -116,6 +148,12 @@ class AnimationLayer {
     'opacity': opacity,
     'fills': fills.map(
       (frame, color) => MapEntry(frame.toString(), color.toARGB32()),
+    ),
+    'regionFills': regionFills.map(
+      (frame, items) => MapEntry(
+        frame.toString(),
+        items.map((item) => item.toJson()).toList(),
+      ),
     ),
     'texts': texts.map(
       (frame, items) => MapEntry(
@@ -158,6 +196,17 @@ class AnimationLayer {
             .toList();
       }
     }
+    final savedRegionFills = json['regionFills'] as Map<String, dynamic>?;
+    if (savedRegionFills != null) {
+      for (final entry in savedRegionFills.entries) {
+        layer.regionFills[int.parse(entry.key)] = (entry.value as List<dynamic>)
+            .map(
+              (item) =>
+                  DrawingRegionFill.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      }
+    }
     return layer;
   }
 }
@@ -181,7 +230,7 @@ class AnimationProject {
 
   Map<String, Object> toJson() => <String, Object>{
     'format': 'velyntora-project',
-    'version': 2,
+    'version': 3,
     'name': name,
     'width': width,
     'height': height,
