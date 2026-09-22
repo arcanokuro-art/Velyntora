@@ -7,6 +7,7 @@ import '../controllers/editor_controller.dart';
 import '../models/animation_models.dart';
 import '../services/frame_exporter.dart';
 import '../services/file_sharer.dart';
+import '../services/media_importer.dart';
 import '../services/project_storage.dart';
 import '../theme/velyntora_theme.dart';
 import '../widgets/drawing_canvas.dart';
@@ -17,11 +18,13 @@ class EditorScreen extends StatefulWidget {
     required this.project,
     this.storage,
     this.fileSharer = const FileSharer(),
+    this.mediaImporter,
     this.autoSaveDelay = const Duration(seconds: 3),
   });
   final AnimationProject project;
   final ProjectStorage? storage;
   final FileSharer fileSharer;
+  final MediaImporter? mediaImporter;
   final Duration autoSaveDelay;
 
   @override
@@ -31,6 +34,7 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   late final EditorController controller;
   final FrameExporter exporter = const FrameExporter();
+  late final MediaImporter mediaImporter;
   Timer? autoSaveTimer;
   bool allowPop = false;
 
@@ -38,6 +42,8 @@ class _EditorScreenState extends State<EditorScreen> {
   void initState() {
     super.initState();
     controller = EditorController(widget.project, storage: widget.storage);
+    mediaImporter = widget.mediaImporter ?? MediaImporter();
+    unawaited(controller.loadMediaImages());
     controller.addListener(_scheduleAutoSave);
   }
 
@@ -64,6 +70,7 @@ class _EditorScreenState extends State<EditorScreen> {
               _TopBar(
                 controller: controller,
                 onBack: _requestClose,
+                onImport: () => _showImportOptions(context),
                 onExport: () => _showExportOptions(context),
               ),
               Expanded(
@@ -322,16 +329,67 @@ class _EditorScreenState extends State<EditorScreen> {
         return _shareGif(context);
     }
   }
+
+  Future<void> _showImportOptions(BuildContext context) async {
+    final type = await showModalBottomSheet<MediaType>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: MediaType.values
+              .map(
+                (type) => ListTile(
+                  leading: Icon(switch (type) {
+                    MediaType.image => Icons.image_outlined,
+                    MediaType.audio => Icons.audio_file_outlined,
+                    MediaType.video => Icons.video_file_outlined,
+                  }),
+                  title: Text(switch (type) {
+                    MediaType.image => 'Importar imagen',
+                    MediaType.audio => 'Importar audio',
+                    MediaType.video => 'Importar video',
+                  }),
+                  onTap: () => Navigator.pop(sheetContext, type),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+    if (type == null || !context.mounted) return;
+    try {
+      final asset = await mediaImporter.pickAndImport(
+        type: type,
+        projectName: controller.project.name,
+        startFrame: controller.activeFrame,
+      );
+      if (asset == null) return;
+      await controller.addMediaAsset(asset);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${asset.name} importado correctamente')),
+        );
+      }
+    } on Object catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo importar: $error')));
+      }
+    }
+  }
 }
 
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.controller,
     required this.onBack,
+    required this.onImport,
     required this.onExport,
   });
   final EditorController controller;
   final VoidCallback onBack;
+  final VoidCallback onImport;
   final VoidCallback onExport;
 
   @override
@@ -375,6 +433,11 @@ class _TopBar extends StatelessWidget {
                 icon: const Icon(Icons.layers_rounded),
                 tooltip: 'Pincel y capas',
               ),
+            IconButton(
+              onPressed: onImport,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              tooltip: 'Importar multimedia',
+            ),
             IconButton(
               onPressed: controller.canUndo ? controller.undo : null,
               icon: const Icon(Icons.undo_rounded),
