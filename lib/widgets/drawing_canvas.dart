@@ -43,6 +43,7 @@ class FrameThumbnail extends StatelessWidget {
 
 class _DrawingCanvasState extends State<DrawingCanvas> {
   final TransformationController _transformation = TransformationController();
+  double _pointerPressure = 1;
 
   EditorController get controller => widget.controller;
 
@@ -66,6 +67,18 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
   void _resetView() {
     _transformation.value = Matrix4.identity();
     controller.resetZoom();
+  }
+
+  void _trackPressure(PointerEvent event) {
+    if (event.kind != PointerDeviceKind.stylus &&
+        event.kind != PointerDeviceKind.invertedStylus) {
+      _pointerPressure = 1;
+      return;
+    }
+    final range = event.pressureMax - event.pressureMin;
+    _pointerPressure = range <= 0
+        ? 1
+        : ((event.pressure - event.pressureMin) / range).clamp(0, 1);
   }
 
   Future<void> _addText(BuildContext context, Offset position) async {
@@ -136,55 +149,61 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
                     BoxShadow(color: Colors.black54, blurRadius: 28),
                   ],
                 ),
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: controller.tool == DrawingTool.text
-                      ? (details) => _addText(
-                          context,
-                          _normalize(
-                            details.localPosition,
-                            Size(width, height),
+                child: Listener(
+                  onPointerDown: _trackPressure,
+                  onPointerMove: _trackPressure,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: controller.tool == DrawingTool.text
+                        ? (details) => _addText(
+                            context,
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                          )
+                        : controller.tool == DrawingTool.select
+                        ? (details) => controller.selectAt(
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                          )
+                        : null,
+                    onPanStart: movingCanvas
+                        ? null
+                        : controller.tool == DrawingTool.select
+                        ? (_) => controller.beginSelectionTransform()
+                        : (details) => controller.beginStroke(
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                            pressure: _pointerPressure,
                           ),
-                        )
-                      : controller.tool == DrawingTool.select
-                      ? (details) => controller.selectAt(
-                          _normalize(
-                            details.localPosition,
-                            Size(width, height),
+                    onPanUpdate: movingCanvas
+                        ? null
+                        : controller.tool == DrawingTool.select
+                        ? (details) => controller.moveSelection(
+                            Offset(
+                              details.delta.dx / width,
+                              details.delta.dy / height,
+                            ),
+                          )
+                        : (details) => controller.extendStroke(
+                            _normalize(
+                              details.localPosition,
+                              Size(width, height),
+                            ),
+                            pressure: _pointerPressure,
                           ),
-                        )
-                      : null,
-                  onPanStart: movingCanvas
-                      ? null
-                      : controller.tool == DrawingTool.select
-                      ? (_) => controller.beginSelectionTransform()
-                      : (details) => controller.beginStroke(
-                          _normalize(
-                            details.localPosition,
-                            Size(width, height),
-                          ),
-                        ),
-                  onPanUpdate: movingCanvas
-                      ? null
-                      : controller.tool == DrawingTool.select
-                      ? (details) => controller.moveSelection(
-                          Offset(
-                            details.delta.dx / width,
-                            details.delta.dy / height,
-                          ),
-                        )
-                      : (details) => controller.extendStroke(
-                          _normalize(
-                            details.localPosition,
-                            Size(width, height),
-                          ),
-                        ),
-                  onPanEnd: controller.tool == DrawingTool.select
-                      ? (_) => controller.finishSelectionTransform()
-                      : null,
-                  child: CustomPaint(
-                    painter: AnimationCanvasPainter(controller),
-                    size: Size(width, height),
+                    onPanEnd: controller.tool == DrawingTool.select
+                        ? (_) => controller.finishSelectionTransform()
+                        : null,
+                    child: CustomPaint(
+                      painter: AnimationCanvasPainter(controller),
+                      size: Size(width, height),
+                    ),
                   ),
                 ),
               ),
@@ -276,21 +295,32 @@ class AnimationCanvasPainter extends CustomPainter {
           ..strokeJoin = StrokeJoin.round
           ..style = PaintingStyle.stroke
           ..blendMode = stroke.erase ? BlendMode.clear : BlendMode.srcOver;
-        final path = Path();
         final first = _scale(stroke.points.first, size);
-        path.moveTo(first.dx, first.dy);
-        for (final point in stroke.points.skip(1)) {
-          final scaled = _scale(point, size);
-          path.lineTo(scaled.dx, scaled.dy);
-        }
         if (stroke.points.length == 1) {
           canvas.drawCircle(
             first,
-            stroke.width / 2,
+            stroke.width * stroke.pressureAt(0) / 2,
             paint..style = PaintingStyle.fill,
           );
-        } else {
+        } else if (stroke.pressures.isEmpty) {
+          final path = Path()..moveTo(first.dx, first.dy);
+          for (final point in stroke.points.skip(1)) {
+            final scaled = _scale(point, size);
+            path.lineTo(scaled.dx, scaled.dy);
+          }
           canvas.drawPath(path, paint);
+        } else {
+          for (var index = 1; index < stroke.points.length; index++) {
+            final start = _scale(stroke.points[index - 1], size);
+            final end = _scale(stroke.points[index], size);
+            final pressure =
+                (stroke.pressureAt(index - 1) + stroke.pressureAt(index)) / 2;
+            canvas.drawLine(
+              start,
+              end,
+              paint..strokeWidth = stroke.width * pressure,
+            );
+          }
         }
       }
       final texts = layer.texts[frame] ?? const <DrawingText>[];
