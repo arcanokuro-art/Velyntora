@@ -4,6 +4,47 @@ enum DrawingTool { brush, eraser, fill, select, text, hand }
 
 enum BrushPreset { pencil, ink, marker }
 
+enum MediaType { image, audio, video }
+
+class MediaAsset {
+  MediaAsset({
+    required this.id,
+    required this.name,
+    required this.path,
+    required this.type,
+    required this.startFrame,
+    this.durationFrames = 1,
+  });
+
+  final String id;
+  final String name;
+  final String path;
+  final MediaType type;
+  final int startFrame;
+  final int durationFrames;
+
+  bool isVisibleAt(int frame) =>
+      frame >= startFrame && frame < startFrame + durationFrames;
+
+  Map<String, Object> toJson() => <String, Object>{
+    'id': id,
+    'name': name,
+    'path': path,
+    'type': type.name,
+    'startFrame': startFrame,
+    'durationFrames': durationFrames,
+  };
+
+  factory MediaAsset.fromJson(Map<String, dynamic> json) => MediaAsset(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    path: json['path'] as String,
+    type: MediaType.values.byName(json['type'] as String),
+    startFrame: (json['startFrame'] as num).toInt(),
+    durationFrames: (json['durationFrames'] as num?)?.toInt() ?? 1,
+  );
+}
+
 class DrawingStroke {
   DrawingStroke({
     required this.points,
@@ -239,16 +280,18 @@ class AnimationProject {
   int fps;
   int frameCount = 6;
   final List<AnimationLayer> layers;
+  final List<MediaAsset> mediaAssets = <MediaAsset>[];
 
   Map<String, Object> toJson() => <String, Object>{
     'format': 'velyntora-project',
-    'version': 3,
+    'version': 4,
     'name': name,
     'width': width,
     'height': height,
     'fps': fps,
     'frameCount': frameCount,
     'layers': layers.map((layer) => layer.toJson()).toList(),
+    'mediaAssets': mediaAssets.map((asset) => asset.toJson()).toList(),
   };
 
   factory AnimationProject.fromJson(Map<String, dynamic> json) {
@@ -270,6 +313,14 @@ class AnimationProject {
       );
     if (project.layers.isEmpty) {
       project.layers.add(AnimationLayer(name: 'Capa 1'));
+    }
+    final savedMedia = json['mediaAssets'] as List<dynamic>?;
+    if (savedMedia != null) {
+      project.mediaAssets.addAll(
+        savedMedia.map(
+          (asset) => MediaAsset.fromJson(asset as Map<String, dynamic>),
+        ),
+      );
     }
     return project;
   }

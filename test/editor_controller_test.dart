@@ -159,7 +159,7 @@ void main() {
     expect(controller.layer.fills[1], controller.color);
     final restored = AnimationProject.fromJson(controller.project.toJson());
     expect(restored.layers.single.fills[1], controller.color);
-    expect(restored.toJson()['version'], 3);
+    expect(restored.toJson()['version'], 4);
   });
 
   test('rellena solamente el interior de un contorno cerrado', () {

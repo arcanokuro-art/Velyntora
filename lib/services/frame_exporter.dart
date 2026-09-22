@@ -23,6 +23,7 @@ class FrameExporter {
     if (frame < 0 || frame >= project.frameCount) {
       throw RangeError.range(frame, 0, project.frameCount - 1, 'frame');
     }
+    await controller.loadMediaImages();
     final size = ui.Size(project.width.toDouble(), project.height.toDouble());
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
@@ -48,6 +49,7 @@ class FrameExporter {
     if (frame < 0 || frame >= project.frameCount) {
       throw RangeError.range(frame, 0, project.frameCount - 1, 'frame');
     }
+    await controller.loadMediaImages();
     final size = ui.Size(project.width.toDouble(), project.height.toDouble());
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
