@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
 
 import '../controllers/editor_controller.dart';
+import '../models/animation_models.dart';
 import '../widgets/drawing_canvas.dart';
 import 'gif_encoder.dart';
 import 'video_encoder.dart';
