@@ -38,6 +38,8 @@ class EditorController extends ChangeNotifier {
   AnimationLayer get layer => project.layers[activeLayer];
   List<DrawingStroke> get strokes => layer.strokesAt(activeFrame);
   List<DrawingText> get texts => layer.textsAt(activeFrame);
+  List<DrawingRegionFill> get regionFills =>
+      layer.regionFills.putIfAbsent(activeFrame, () => <DrawingRegionFill>[]);
   bool get canUndo => _undoHistory.isNotEmpty;
   bool get canRedo => _redoHistory.isNotEmpty;
   Duration get playbackInterval =>
@@ -291,7 +293,7 @@ class EditorController extends ChangeNotifier {
   void beginStroke(Offset point) {
     if (layer.locked || !layer.visible) return;
     if (tool == DrawingTool.fill) {
-      fillFrame();
+      fillRegion(point);
       return;
     }
     if (tool != DrawingTool.brush && tool != DrawingTool.eraser) return;
@@ -336,11 +338,18 @@ class EditorController extends ChangeNotifier {
 
   void clearFrame() {
     final previousFill = layer.fills[activeFrame];
-    if (strokes.isEmpty && texts.isEmpty && previousFill == null) return;
+    final previousRegionFills = List<DrawingRegionFill>.from(regionFills);
+    if (strokes.isEmpty &&
+        texts.isEmpty &&
+        previousFill == null &&
+        previousRegionFills.isEmpty) {
+      return;
+    }
     final previous = List<DrawingStroke>.from(strokes);
     final previousTexts = List<DrawingText>.from(texts);
     strokes.clear();
     texts.clear();
+    regionFills.clear();
     layer.fills.remove(activeFrame);
     _recordAction(
       _ClearFrameAction(
@@ -349,6 +358,7 @@ class EditorController extends ChangeNotifier {
         activeFrame,
         previous,
         previousTexts,
+        previousRegionFills,
         previousFill,
       ),
     );
@@ -363,6 +373,59 @@ class EditorController extends ChangeNotifier {
     _recordAction(_FillAction(layer, activeFrame, previous, color));
     hasUnsavedChanges = true;
     notifyListeners();
+  }
+
+  bool fillRegion(Offset point) {
+    DrawingStroke? boundary;
+    var smallestArea = double.infinity;
+    for (final stroke in strokes) {
+      if (stroke.erase || !_isClosed(stroke.points)) continue;
+      if (!_containsPoint(stroke.points, point)) continue;
+      final area = _polygonArea(stroke.points).abs();
+      if (area < smallestArea) {
+        smallestArea = area;
+        boundary = stroke;
+      }
+    }
+    if (boundary == null) {
+      fillFrame();
+      return false;
+    }
+    final item = DrawingRegionFill(
+      boundary: List<Offset>.from(boundary.points),
+      color: color,
+    );
+    regionFills.add(item);
+    _recordAction(_RegionFillAction(regionFills, item));
+    hasUnsavedChanges = true;
+    notifyListeners();
+    return true;
+  }
+
+  bool _isClosed(List<Offset> points) =>
+      points.length >= 3 && (points.first - points.last).distance <= 0.04;
+
+  bool _containsPoint(List<Offset> polygon, Offset point) {
+    var inside = false;
+    for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      final a = polygon[i];
+      final b = polygon[j];
+      final crosses = (a.dy > point.dy) != (b.dy > point.dy);
+      if (crosses &&
+          point.dx < (b.dx - a.dx) * (point.dy - a.dy) / (b.dy - a.dy) + a.dx) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  double _polygonArea(List<Offset> polygon) {
+    var area = 0.0;
+    for (var i = 0; i < polygon.length; i++) {
+      final next = polygon[(i + 1) % polygon.length];
+      area += polygon[i].dx * next.dy - next.dx * polygon[i].dy;
+    }
+    return area / 2;
   }
 
   void addText(String value, Offset position) {
@@ -415,6 +478,10 @@ class EditorController extends ChangeNotifier {
         if (existing != null) item.frames[index + 1] = existing;
         final existingFill = item.fills.remove(index);
         if (existingFill != null) item.fills[index + 1] = existingFill;
+        final existingRegionFills = item.regionFills.remove(index);
+        if (existingRegionFills != null) {
+          item.regionFills[index + 1] = existingRegionFills;
+        }
         final existingTexts = item.texts.remove(index);
         if (existingTexts != null) item.texts[index + 1] = existingTexts;
       }
@@ -425,6 +492,12 @@ class EditorController extends ChangeNotifier {
             .toList();
         final fill = item.fills[activeFrame];
         if (fill != null) item.fills[insertAt] = fill;
+        final fills = item.regionFills[activeFrame];
+        if (fills != null) {
+          item.regionFills[insertAt] = fills
+              .map((fill) => fill.copy())
+              .toList();
+        }
         item.texts[insertAt] = item
             .textsAt(activeFrame)
             .map((text) => text.copy())
@@ -444,6 +517,7 @@ class EditorController extends ChangeNotifier {
     for (final item in project.layers) {
       item.frames.remove(removedFrame);
       item.fills.remove(removedFrame);
+      item.regionFills.remove(removedFrame);
       item.texts.remove(removedFrame);
       final shiftedFrames = <int, List<DrawingStroke>>{};
       for (final entry in item.frames.entries) {
@@ -461,6 +535,16 @@ class EditorController extends ChangeNotifier {
       item.fills
         ..clear()
         ..addAll(shiftedFills);
+      final shiftedRegionFills = <int, List<DrawingRegionFill>>{};
+      for (final entry in item.regionFills.entries) {
+        shiftedRegionFills[entry.key > removedFrame
+                ? entry.key - 1
+                : entry.key] =
+            entry.value;
+      }
+      item.regionFills
+        ..clear()
+        ..addAll(shiftedRegionFills);
       final shiftedTexts = <int, List<DrawingText>>{};
       for (final entry in item.texts.entries) {
         shiftedTexts[entry.key > removedFrame ? entry.key - 1 : entry.key] =
@@ -634,6 +718,19 @@ class _TextAction implements _EditAction {
   void redo() => target.add(item);
 }
 
+class _RegionFillAction implements _EditAction {
+  _RegionFillAction(this.target, this.item);
+
+  final List<DrawingRegionFill> target;
+  final DrawingRegionFill item;
+
+  @override
+  void undo() => target.remove(item);
+
+  @override
+  void redo() => target.add(item);
+}
+
 class _RemoveStrokeAction implements _EditAction {
   _RemoveStrokeAction(this.target, this.item, this.index);
 
@@ -745,6 +842,7 @@ class _ClearFrameAction implements _EditAction {
     this.frame,
     this.previous,
     this.previousTexts,
+    this.previousRegionFills,
     this.previousFill,
   );
 
@@ -753,12 +851,16 @@ class _ClearFrameAction implements _EditAction {
   final int frame;
   final List<DrawingStroke> previous;
   final List<DrawingText> previousTexts;
+  final List<DrawingRegionFill> previousRegionFills;
   final Color? previousFill;
 
   @override
   void undo() {
     target.addAll(previous);
     layer.textsAt(frame).addAll(previousTexts);
+    layer.regionFills
+        .putIfAbsent(frame, () => <DrawingRegionFill>[])
+        .addAll(previousRegionFills);
     if (previousFill != null) layer.fills[frame] = previousFill!;
   }
 
@@ -766,6 +868,7 @@ class _ClearFrameAction implements _EditAction {
   void redo() {
     target.clear();
     layer.textsAt(frame).clear();
+    layer.regionFills.remove(frame);
     layer.fills.remove(frame);
   }
 }
