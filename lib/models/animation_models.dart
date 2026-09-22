@@ -10,18 +10,24 @@ class DrawingStroke {
     required this.color,
     required this.width,
     required this.erase,
-  });
+    List<double>? pressures,
+  }) : pressures = pressures ?? <double>[];
 
   final List<Offset> points;
   final Color color;
   final double width;
   final bool erase;
+  final List<double> pressures;
+
+  double pressureAt(int index) =>
+      index < pressures.length ? pressures[index].clamp(0.15, 1) : 1;
 
   DrawingStroke copy() => DrawingStroke(
     points: List<Offset>.from(points),
     color: color,
     width: width,
     erase: erase,
+    pressures: List<double>.from(pressures),
   );
 
   Map<String, Object> toJson() => <String, Object>{
@@ -31,6 +37,7 @@ class DrawingStroke {
     'color': color.toARGB32(),
     'width': width,
     'erase': erase,
+    'pressures': pressures,
   };
 
   factory DrawingStroke.fromJson(Map<String, dynamic> json) => DrawingStroke(
@@ -45,6 +52,11 @@ class DrawingStroke {
     color: Color(json['color'] as int),
     width: (json['width'] as num).toDouble(),
     erase: json['erase'] as bool,
+    pressures:
+        (json['pressures'] as List<dynamic>?)
+            ?.map((value) => (value as num).toDouble())
+            .toList() ??
+        <double>[],
   );
 }
 
