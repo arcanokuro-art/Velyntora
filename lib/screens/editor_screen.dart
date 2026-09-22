@@ -259,6 +259,27 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  Future<void> _exportMp4(BuildContext context, {bool share = false}) async {
+    try {
+      final file = await exporter.exportMp4(controller);
+      if (share) {
+        await widget.fileSharer.share(<File>[
+          file,
+        ], title: 'Video ${controller.project.name}');
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Video MP4 exportado en ${file.path}')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo exportar el MP4: $error')),
+        );
+      }
+    }
+  }
+
   Future<void> _showExportOptions(BuildContext context) async {
     final option = await showModalBottomSheet<String>(
       context: context,
@@ -294,6 +315,14 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
               onTap: () => Navigator.pop(sheetContext, 'gif'),
             ),
+            ListTile(
+              leading: const Icon(Icons.movie_creation_outlined),
+              title: const Text('Video MP4'),
+              subtitle: Text(
+                '${controller.project.width} × ${controller.project.height} a ${controller.project.fps} FPS (H.264)',
+              ),
+              onTap: () => Navigator.pop(sheetContext, 'mp4'),
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.share_outlined),
@@ -311,6 +340,14 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
               onTap: () => Navigator.pop(sheetContext, 'share-gif'),
             ),
+            ListTile(
+              leading: const Icon(Icons.video_file_outlined),
+              title: const Text('Compartir MP4'),
+              subtitle: const Text(
+                'Genera el video y abre el menú del sistema',
+              ),
+              onTap: () => Navigator.pop(sheetContext, 'share-mp4'),
+            ),
           ],
         ),
       ),
@@ -323,10 +360,14 @@ class _EditorScreenState extends State<EditorScreen> {
         return _exportSequence(context);
       case 'gif':
         return _exportGif(context);
+      case 'mp4':
+        return _exportMp4(context);
       case 'share-frame':
         return _shareFrame(context);
       case 'share-gif':
         return _shareGif(context);
+      case 'share-mp4':
+        return _exportMp4(context, share: true);
     }
   }
 

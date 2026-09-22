@@ -12,6 +12,7 @@ dependencies:
   path_provider: ^2.1.5
   share_plus: ^13.3.0
   file_selector: ^1.0.3
+  ffmpeg_kit_flutter_new_min_gpl: ^2.6.2
 
 dev_dependencies:
   flutter_test:
