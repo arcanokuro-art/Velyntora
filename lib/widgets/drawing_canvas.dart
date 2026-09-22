@@ -101,6 +101,12 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth ||
+            !constraints.hasBoundedHeight ||
+            constraints.maxWidth <= 0 ||
+            constraints.maxHeight <= 0) {
+          return const SizedBox.shrink();
+        }
         final ratio = controller.project.width / controller.project.height;
         var width = constraints.maxWidth;
         var height = width / ratio;
@@ -189,8 +195,10 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
     );
   }
 
-  Offset _normalize(Offset point, Size size) =>
-      Offset(point.dx / size.width, point.dy / size.height);
+  Offset _normalize(Offset point, Size size) => Offset(
+    (point.dx / size.width).clamp(0.0, 1.0),
+    (point.dy / size.height).clamp(0.0, 1.0),
+  );
 }
 
 class AnimationCanvasPainter extends CustomPainter {
@@ -206,6 +214,7 @@ class AnimationCanvasPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.isEmpty || !size.width.isFinite || !size.height.isFinite) return;
     final frame = frameOverride ?? controller.activeFrame;
     canvas.saveLayer(Offset.zero & size, Paint());
     canvas.drawColor(Colors.white, BlendMode.src);
@@ -265,19 +274,25 @@ class AnimationCanvasPainter extends CustomPainter {
       }
       final texts = layer.texts[frame] ?? const <DrawingText>[];
       for (final item in texts) {
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: item.text,
-            style: TextStyle(
-              color: item.color.withValues(
-                alpha: item.color.a * layer.opacity * opacity,
+        final textPainter =
+            TextPainter(
+              text: TextSpan(
+                text: item.text,
+                style: TextStyle(
+                  color: item.color.withValues(
+                    alpha: item.color.a * layer.opacity * opacity,
+                  ),
+                  fontSize: item.fontSize,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              fontSize: item.fontSize,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout(maxWidth: size.width * (1 - item.position.dx));
+              textDirection: TextDirection.ltr,
+            )..layout(
+              maxWidth: (size.width * (1 - item.position.dx)).clamp(
+                0.0,
+                size.width,
+              ),
+            );
         final origin = _scale(item.position, size);
         canvas
           ..save()
