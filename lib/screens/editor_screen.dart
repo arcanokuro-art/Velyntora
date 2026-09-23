@@ -766,8 +766,15 @@ class _CompactSlider extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Text(label, style: const TextStyle(fontSize: 12)),
-            const Spacer(),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 6),
             Text(
               valueLabel,
               style: const TextStyle(
