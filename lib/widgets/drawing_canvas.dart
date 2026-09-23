@@ -153,9 +153,9 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
               child: Transform(
                 alignment: Alignment.center,
                 transform: Matrix4.identity()
-                  ..translate(_viewOffset.dx, _viewOffset.dy)
+                  ..translateByDouble(_viewOffset.dx, _viewOffset.dy, 0, 1)
                   ..rotateZ(_viewRotation)
-                  ..scale(_viewScale),
+                  ..scaleByDouble(_viewScale, _viewScale, 1, 1),
                 child: Container(
                   width: width,
                   height: height,
