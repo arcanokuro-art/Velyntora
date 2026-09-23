@@ -21,6 +21,52 @@ void main() {
     expect(find.text('Todavía no hay proyectos guardados.'), findsOneWidget);
   });
 
+  testWidgets('la navegación principal abre pinceles recursos y ajustes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final storage = _MemoryProjectStorage();
+    await tester.pumpWidget(VelyntoraApp(storage: storage));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Pinceles'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pinceles'), findsWidgets);
+    expect(find.text('Lápiz'), findsOneWidget);
+    expect(find.text('Tinta'), findsOneWidget);
+    expect(find.text('Marcador'), findsOneWidget);
+
+    await tester.tap(find.text('Recursos'));
+    await tester.pumpAndSettle();
+    expect(find.text('Aún no hay recursos importados'), findsOneWidget);
+
+    await tester.tap(find.text('Ajustes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ajustes'), findsWidgets);
+    expect(find.text('Resolución predeterminada'), findsOneWidget);
+    expect(find.text('Velocidad predeterminada'), findsOneWidget);
+  });
+
+  testWidgets('la biblioteca de pinceles cabe en una ventana compacta', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(VelyntoraApp(storage: _MemoryProjectStorage()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pinceles'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lápiz'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editor cabe en una pantalla Android horizontal', (tester) async {
     tester.view.physicalSize = const Size(800, 480);
     tester.view.devicePixelRatio = 1;
