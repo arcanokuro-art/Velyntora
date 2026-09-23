@@ -7,6 +7,20 @@ import 'package:velyntora/models/animation_models.dart';
 import 'package:velyntora/services/project_storage.dart';
 
 void main() {
+  test('la vista conserva zoom y rotación libre', () {
+    final controller = EditorController(AnimationProject(name: 'Vista'));
+    addTearDown(controller.dispose);
+
+    controller.setViewTransform(scale: 2.5, rotation: 3.141592653589793);
+
+    expect(controller.zoom, 2.5);
+    expect(controller.viewRotation, closeTo(3.141592653589793, 0.000001));
+
+    controller.resetZoom();
+    expect(controller.zoom, 1);
+    expect(controller.viewRotation, 0);
+  });
+
   test('agrega y duplica fotogramas', () {
     final controller = EditorController(AnimationProject(name: 'Prueba'));
     expect(controller.project.frameCount, 6);

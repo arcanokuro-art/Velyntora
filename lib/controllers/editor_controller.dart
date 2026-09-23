@@ -23,6 +23,7 @@ class EditorController extends ChangeNotifier {
   double pressureSensitivity = 1;
   BrushPreset brushPreset = BrushPreset.ink;
   double zoom = 1;
+  double viewRotation = 0;
   int activeFrame = 0;
   int activeLayer = 0;
   bool onionSkin = true;
@@ -343,7 +344,20 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetZoom() => setZoom(1);
+  void setViewTransform({required double scale, required double rotation}) {
+    final safeZoom = scale.clamp(0.25, 8.0).toDouble();
+    if (zoom == safeZoom && viewRotation == rotation) return;
+    zoom = safeZoom;
+    viewRotation = rotation;
+    notifyListeners();
+  }
+
+  void resetZoom() {
+    if (zoom == 1 && viewRotation == 0) return;
+    zoom = 1;
+    viewRotation = 0;
+    notifyListeners();
+  }
 
   void beginStroke(Offset point, {double pressure = 1}) {
     if (layer.locked || !layer.visible) return;

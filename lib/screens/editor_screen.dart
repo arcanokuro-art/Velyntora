@@ -73,6 +73,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 onImport: () => _showImportOptions(context),
                 onExport: () => _showExportOptions(context),
               ),
+              _ContextualToolBar(controller: controller),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -589,6 +590,341 @@ class _SavedBadge extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+class _ContextualToolBar extends StatelessWidget {
+  const _ContextualToolBar({required this.controller});
+
+  final EditorController controller;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 68,
+    decoration: const BoxDecoration(
+      color: Color(0xFF101326),
+      border: Border(bottom: BorderSide(color: VelyntoraColors.border)),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: <Widget>[
+          _ToolSelector(controller: controller),
+          const _ContextDivider(),
+          if (controller.tool == DrawingTool.brush ||
+              controller.tool == DrawingTool.eraser) ...<Widget>[
+            if (controller.tool == DrawingTool.brush) ...<Widget>[
+              _BrushPresetSelector(controller: controller),
+              const _ContextDivider(),
+            ],
+            _CompactSlider(
+              label: 'Tamaño',
+              valueLabel: '${controller.brushSize.round()} px',
+              value: controller.brushSize,
+              min: 1,
+              max: 80,
+              onChanged: controller.setBrushSize,
+            ),
+            const _ContextDivider(),
+            _CompactSlider(
+              label: 'Opacidad',
+              valueLabel: '${(controller.brushOpacity * 100).round()}%',
+              value: controller.brushOpacity,
+              min: 0.05,
+              max: 1,
+              onChanged: controller.setBrushOpacity,
+            ),
+            const _ContextDivider(),
+            _CompactSlider(
+              label: 'Estabilizador',
+              valueLabel: '${(controller.stabilization * 100).round()}%',
+              value: controller.stabilization,
+              min: 0,
+              max: 0.9,
+              onChanged: controller.setStabilization,
+            ),
+            const _ContextDivider(),
+            _CompactToggle(
+              label: 'Presión',
+              value: controller.pressureEnabled,
+              onChanged: controller.setPressureEnabled,
+            ),
+          ] else if (controller.tool == DrawingTool.select) ...<Widget>[
+            _SelectionActions(controller: controller),
+          ] else if (controller.tool == DrawingTool.fill) ...<Widget>[
+            const _ToolHint(
+              icon: Icons.format_color_fill_rounded,
+              text: 'Toca una región cerrada para rellenarla',
+            ),
+          ] else if (controller.tool == DrawingTool.text) ...<Widget>[
+            _CompactSlider(
+              label: 'Tamaño',
+              valueLabel: '${(controller.brushSize * 2.4).round()} px',
+              value: controller.brushSize,
+              min: 7,
+              max: 40,
+              onChanged: controller.setBrushSize,
+            ),
+          ] else ...<Widget>[
+            const _ToolHint(
+              icon: Icons.touch_app_rounded,
+              text: 'Arrastra para mover · pellizca para acercar · gira con dos dedos',
+            ),
+          ],
+          const _ContextDivider(),
+          _ColorSelector(controller: controller),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ToolSelector extends StatelessWidget {
+  const _ToolSelector({required this.controller});
+  final EditorController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label) = switch (controller.tool) {
+      DrawingTool.brush => (Icons.brush_rounded, 'Pincel'),
+      DrawingTool.eraser => (Icons.auto_fix_normal_rounded, 'Borrador'),
+      DrawingTool.fill => (Icons.format_color_fill_rounded, 'Relleno'),
+      DrawingTool.select => (Icons.select_all_rounded, 'Selección'),
+      DrawingTool.text => (Icons.text_fields_rounded, 'Texto'),
+      DrawingTool.hand => (Icons.pan_tool_alt_rounded, 'Mover'),
+    };
+    return MenuAnchor(
+      builder: (context, menuController, child) => OutlinedButton.icon(
+        onPressed: () => menuController.isOpen
+            ? menuController.close()
+            : menuController.open(),
+        icon: Icon(icon),
+        label: Text(label),
+      ),
+      menuChildren: <Widget>[
+        for (final item in const <(DrawingTool, IconData, String)>[
+          (DrawingTool.brush, Icons.brush_rounded, 'Pincel'),
+          (DrawingTool.eraser, Icons.auto_fix_normal_rounded, 'Borrador'),
+          (DrawingTool.fill, Icons.format_color_fill_rounded, 'Relleno'),
+          (DrawingTool.select, Icons.select_all_rounded, 'Selección'),
+          (DrawingTool.text, Icons.text_fields_rounded, 'Texto'),
+          (DrawingTool.hand, Icons.pan_tool_alt_rounded, 'Mover'),
+        ])
+          MenuItemButton(
+            onPressed: () => controller.selectTool(item.$1),
+            leadingIcon: Icon(item.$2),
+            child: Text(item.$3),
+          ),
+      ],
+    );
+  }
+}
+
+class _BrushPresetSelector extends StatelessWidget {
+  const _BrushPresetSelector({required this.controller});
+  final EditorController controller;
+
+  @override
+  Widget build(BuildContext context) => DropdownButton<BrushPreset>(
+    value: controller.brushPreset,
+    underline: const SizedBox.shrink(),
+    items: const <DropdownMenuItem<BrushPreset>>[
+      DropdownMenuItem(value: BrushPreset.pencil, child: Text('Lápiz')),
+      DropdownMenuItem(value: BrushPreset.ink, child: Text('Tinta')),
+      DropdownMenuItem(value: BrushPreset.marker, child: Text('Marcador')),
+    ],
+    onChanged: (value) {
+      if (value != null) controller.selectBrushPreset(value);
+    },
+  );
+}
+
+class _CompactSlider extends StatelessWidget {
+  const _CompactSlider({
+    required this.label,
+    required this.valueLabel,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String valueLabel;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 178,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Text(label, style: const TextStyle(fontSize: 12)),
+            const Spacer(),
+            Text(
+              valueLabel,
+              style: const TextStyle(
+                color: VelyntoraColors.muted,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 26,
+          child: Slider(
+            value: value.clamp(min, max).toDouble(),
+            min: min,
+            max: max,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _CompactToggle extends StatelessWidget {
+  const _CompactToggle({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      Switch.adaptive(value: value, onChanged: onChanged),
+      Text(label),
+    ],
+  );
+}
+
+class _SelectionActions extends StatelessWidget {
+  const _SelectionActions({required this.controller});
+  final EditorController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled =
+        controller.selectedStroke != null || controller.selectedText != null;
+    return Row(
+      children: <Widget>[
+        IconButton(
+          onPressed: enabled ? () => controller.scaleSelection(0.8) : null,
+          icon: const Icon(Icons.zoom_in_map_rounded),
+          tooltip: 'Reducir',
+        ),
+        IconButton(
+          onPressed: enabled ? () => controller.scaleSelection(1.25) : null,
+          icon: const Icon(Icons.zoom_out_map_rounded),
+          tooltip: 'Ampliar',
+        ),
+        IconButton(
+          onPressed: enabled
+              ? () => controller.rotateSelection(-0.261799)
+              : null,
+          icon: const Icon(Icons.rotate_left_rounded),
+          tooltip: 'Girar 15° a la izquierda',
+        ),
+        IconButton(
+          onPressed: enabled
+              ? () => controller.rotateSelection(0.261799)
+              : null,
+          icon: const Icon(Icons.rotate_right_rounded),
+          tooltip: 'Girar 15° a la derecha',
+        ),
+        IconButton(
+          onPressed: enabled ? controller.deleteSelection : null,
+          icon: const Icon(Icons.delete_outline_rounded),
+          tooltip: 'Eliminar selección',
+        ),
+      ],
+    );
+  }
+}
+
+class _ToolHint extends StatelessWidget {
+  const _ToolHint({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      Icon(icon, color: VelyntoraColors.cyan),
+      const SizedBox(width: 8),
+      Text(text, style: const TextStyle(color: VelyntoraColors.muted)),
+    ],
+  );
+}
+
+class _ColorSelector extends StatelessWidget {
+  const _ColorSelector({required this.controller});
+  final EditorController controller;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<Color>(
+    tooltip: 'Color del dibujo',
+    onSelected: controller.setColor,
+    itemBuilder: (context) =>
+        const <Color>[
+              Color(0xFF17192B),
+              Color(0xFF7357FF),
+              Color(0xFFF05CE7),
+              Color(0xFF21D4F7),
+              Color(0xFFFFC857),
+              Color(0xFFFF5E78),
+            ]
+            .map(
+              (color) => PopupMenuItem<Color>(
+                value: color,
+                child: Row(
+                  children: <Widget>[
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white24),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+    child: Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: controller.color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+    ),
+  );
+}
+
+class _ContextDivider extends StatelessWidget {
+  const _ContextDivider();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(horizontal: 10),
+    child: VerticalDivider(width: 1),
   );
 }
 
@@ -1272,6 +1608,11 @@ class _StatusBar extends StatelessWidget {
         const SizedBox(width: 18),
         Text(
           '${controller.project.layers.length} capa(s)',
+          style: const TextStyle(fontSize: 11, color: VelyntoraColors.muted),
+        ),
+        const SizedBox(width: 18),
+        Text(
+          'Rotación ${(controller.viewRotation * 57.2958).round()}°',
           style: const TextStyle(fontSize: 11, color: VelyntoraColors.muted),
         ),
         const Spacer(),
