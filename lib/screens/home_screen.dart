@@ -442,34 +442,44 @@ class _BrushLibrary extends StatelessWidget {
       title: 'Pinceles',
       subtitle: 'Elige el pincel inicial de los proyectos que abras.',
     ),
-    child: GridView.count(
-      crossAxisCount: MediaQuery.sizeOf(context).width > 1050 ? 3 : 2,
-      crossAxisSpacing: 18,
-      mainAxisSpacing: 18,
-      childAspectRatio: 1.35,
-      children: <Widget>[
-        _BrushCard(
-          title: 'Lápiz',
-          description: 'Trazo fino, ligeramente transparente y directo.',
-          icon: Icons.edit_rounded,
-          selected: selected == BrushPreset.pencil,
-          onTap: () => onSelected(BrushPreset.pencil),
-        ),
-        _BrushCard(
-          title: 'Tinta',
-          description: 'Línea firme y estabilizada para entintado limpio.',
-          icon: Icons.brush_rounded,
-          selected: selected == BrushPreset.ink,
-          onTap: () => onSelected(BrushPreset.ink),
-        ),
-        _BrushCard(
-          title: 'Marcador',
-          description: 'Pincel ancho y translúcido para color y bocetos.',
-          icon: Icons.border_color_rounded,
-          selected: selected == BrushPreset.marker,
-          onTap: () => onSelected(BrushPreset.marker),
-        ),
-      ],
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 800
+            ? 3
+            : constraints.maxWidth >= 480
+            ? 2
+            : 1;
+        final ratio = columns == 1 ? 2.2 : (columns == 2 ? 1.05 : 1.35);
+        return GridView.count(
+          crossAxisCount: columns,
+          crossAxisSpacing: 18,
+          mainAxisSpacing: 18,
+          childAspectRatio: ratio,
+          children: <Widget>[
+            _BrushCard(
+              title: 'Lápiz',
+              description: 'Trazo fino, ligeramente transparente y directo.',
+              icon: Icons.edit_rounded,
+              selected: selected == BrushPreset.pencil,
+              onTap: () => onSelected(BrushPreset.pencil),
+            ),
+            _BrushCard(
+              title: 'Tinta',
+              description: 'Línea firme y estabilizada para entintado limpio.',
+              icon: Icons.brush_rounded,
+              selected: selected == BrushPreset.ink,
+              onTap: () => onSelected(BrushPreset.ink),
+            ),
+            _BrushCard(
+              title: 'Marcador',
+              description: 'Pincel ancho y translúcido para color y bocetos.',
+              icon: Icons.border_color_rounded,
+              selected: selected == BrushPreset.marker,
+              onTap: () => onSelected(BrushPreset.marker),
+            ),
+          ],
+        );
+      },
     ),
   );
 }
