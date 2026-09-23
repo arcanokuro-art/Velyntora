@@ -37,6 +37,25 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('editor muestra la barra contextual del pincel', (tester) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(project: AnimationProject(name: 'Herramientas')),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Tamaño'), findsWidgets);
+    expect(find.text('Opacidad'), findsWidgets);
+    expect(find.text('Estabilizador'), findsWidgets);
+    expect(find.text('Presión'), findsOneWidget);
+  });
+
   testWidgets('la galeria muestra proyectos guardados', (tester) async {
     final storage = _MemoryProjectStorage();
     await storage.save(AnimationProject(name: 'Proyecto recuperado', fps: 24));

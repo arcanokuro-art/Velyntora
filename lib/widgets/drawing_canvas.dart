@@ -45,31 +45,44 @@ class FrameThumbnail extends StatelessWidget {
 }
 
 class _DrawingCanvasState extends State<DrawingCanvas> {
-  final TransformationController _transformation = TransformationController();
   double _pointerPressure = 1;
+  double _viewScale = 1;
+  double _viewRotation = 0;
+  Offset _viewOffset = Offset.zero;
+  double _gestureStartScale = 1;
+  double _gestureStartRotation = 0;
+  Offset _gestureStartOffset = Offset.zero;
+  Offset _gestureStartFocalPoint = Offset.zero;
 
   EditorController get controller => widget.controller;
 
-  @override
-  void initState() {
-    super.initState();
-    _transformation.addListener(_reportZoom);
-  }
-
-  @override
-  void dispose() {
-    _transformation
-      ..removeListener(_reportZoom)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _reportZoom() =>
-      controller.setZoom(_transformation.value.getMaxScaleOnAxis());
-
   void _resetView() {
-    _transformation.value = Matrix4.identity();
+    setState(() {
+      _viewScale = 1;
+      _viewRotation = 0;
+      _viewOffset = Offset.zero;
+    });
     controller.resetZoom();
+  }
+
+  void _startViewGesture(ScaleStartDetails details) {
+    _gestureStartScale = _viewScale;
+    _gestureStartRotation = _viewRotation;
+    _gestureStartOffset = _viewOffset;
+    _gestureStartFocalPoint = details.focalPoint;
+  }
+
+  void _updateViewGesture(ScaleUpdateDetails details) {
+    final nextScale = (_gestureStartScale * details.scale)
+        .clamp(0.25, 8.0)
+        .toDouble();
+    setState(() {
+      _viewScale = nextScale;
+      _viewRotation = _gestureStartRotation + details.rotation;
+      _viewOffset =
+          _gestureStartOffset + details.focalPoint - _gestureStartFocalPoint;
+    });
+    controller.setViewTransform(scale: nextScale, rotation: _viewRotation);
   }
 
   void _trackPressure(PointerEvent event) {
@@ -133,79 +146,82 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
         final movingCanvas = controller.tool == DrawingTool.hand;
         return GestureDetector(
           onDoubleTap: movingCanvas ? _resetView : null,
-          child: InteractiveViewer(
-            transformationController: _transformation,
-            minScale: 0.25,
-            maxScale: 8,
-            panEnabled: movingCanvas,
-            scaleEnabled: movingCanvas,
-            boundaryMargin: const EdgeInsets.all(600),
+          onScaleStart: movingCanvas ? _startViewGesture : null,
+          onScaleUpdate: movingCanvas ? _updateViewGesture : null,
+          child: ClipRect(
             child: Center(
-              child: Container(
-                width: width,
-                height: height,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(3),
-                  boxShadow: const <BoxShadow>[
-                    BoxShadow(color: Colors.black54, blurRadius: 28),
-                  ],
-                ),
-                child: Listener(
-                  onPointerDown: _trackPressure,
-                  onPointerMove: _trackPressure,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: controller.tool == DrawingTool.text
-                        ? (details) => _addText(
-                            context,
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..translateByDouble(_viewOffset.dx, _viewOffset.dy, 0, 1)
+                  ..rotateZ(_viewRotation)
+                  ..scaleByDouble(_viewScale, _viewScale, 1, 1),
+                child: Container(
+                  width: width,
+                  height: height,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: const <BoxShadow>[
+                      BoxShadow(color: Colors.black54, blurRadius: 28),
+                    ],
+                  ),
+                  child: Listener(
+                    onPointerDown: _trackPressure,
+                    onPointerMove: _trackPressure,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: controller.tool == DrawingTool.text
+                          ? (details) => _addText(
+                              context,
+                              _normalize(
+                                details.localPosition,
+                                Size(width, height),
+                              ),
+                            )
+                          : controller.tool == DrawingTool.select
+                          ? (details) => controller.selectAt(
+                              _normalize(
+                                details.localPosition,
+                                Size(width, height),
+                              ),
+                            )
+                          : null,
+                      onPanStart: movingCanvas
+                          ? null
+                          : controller.tool == DrawingTool.select
+                          ? (_) => controller.beginSelectionTransform()
+                          : (details) => controller.beginStroke(
+                              _normalize(
+                                details.localPosition,
+                                Size(width, height),
+                              ),
+                              pressure: _pointerPressure,
                             ),
-                          )
-                        : controller.tool == DrawingTool.select
-                        ? (details) => controller.selectAt(
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
+                      onPanUpdate: movingCanvas
+                          ? null
+                          : controller.tool == DrawingTool.select
+                          ? (details) => controller.moveSelection(
+                              Offset(
+                                details.delta.dx / width,
+                                details.delta.dy / height,
+                              ),
+                            )
+                          : (details) => controller.extendStroke(
+                              _normalize(
+                                details.localPosition,
+                                Size(width, height),
+                              ),
+                              pressure: _pointerPressure,
                             ),
-                          )
-                        : null,
-                    onPanStart: movingCanvas
-                        ? null
-                        : controller.tool == DrawingTool.select
-                        ? (_) => controller.beginSelectionTransform()
-                        : (details) => controller.beginStroke(
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
-                            ),
-                            pressure: _pointerPressure,
-                          ),
-                    onPanUpdate: movingCanvas
-                        ? null
-                        : controller.tool == DrawingTool.select
-                        ? (details) => controller.moveSelection(
-                            Offset(
-                              details.delta.dx / width,
-                              details.delta.dy / height,
-                            ),
-                          )
-                        : (details) => controller.extendStroke(
-                            _normalize(
-                              details.localPosition,
-                              Size(width, height),
-                            ),
-                            pressure: _pointerPressure,
-                          ),
-                    onPanEnd: controller.tool == DrawingTool.select
-                        ? (_) => controller.finishSelectionTransform()
-                        : null,
-                    child: CustomPaint(
-                      painter: AnimationCanvasPainter(controller),
-                      size: Size(width, height),
+                      onPanEnd: controller.tool == DrawingTool.select
+                          ? (_) => controller.finishSelectionTransform()
+                          : null,
+                      child: CustomPaint(
+                        painter: AnimationCanvasPainter(controller),
+                        size: Size(width, height),
+                      ),
                     ),
                   ),
                 ),
