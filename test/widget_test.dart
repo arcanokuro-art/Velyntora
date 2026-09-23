@@ -41,6 +41,7 @@ void main() {
 
     await tester.tap(find.text('Ajustes'));
     await tester.pumpAndSettle();
+    expect(find.text('Ajustes'), findsWidgets);
     expect(find.text('Resolución predeterminada'), findsOneWidget);
     expect(find.text('Velocidad predeterminada'), findsOneWidget);
   });
