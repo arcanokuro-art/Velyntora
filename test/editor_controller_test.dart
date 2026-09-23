@@ -49,6 +49,7 @@ void main() {
             points: const <Offset>[Offset(0.1, 0.2), Offset(0.3, 0.4)],
             color: const Color(0xFF7357FF),
             width: 8,
+            erase: false,
           ),
         );
 
