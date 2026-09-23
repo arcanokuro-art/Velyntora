@@ -20,12 +20,14 @@ class EditorScreen extends StatefulWidget {
     this.fileSharer = const FileSharer(),
     this.mediaImporter,
     this.autoSaveDelay = const Duration(seconds: 3),
+    this.initialBrushPreset = BrushPreset.ink,
   });
   final AnimationProject project;
   final ProjectStorage? storage;
   final FileSharer fileSharer;
   final MediaImporter? mediaImporter;
   final Duration autoSaveDelay;
+  final BrushPreset initialBrushPreset;
 
   @override
   State<EditorScreen> createState() => _EditorScreenState();
@@ -42,6 +44,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void initState() {
     super.initState();
     controller = EditorController(widget.project, storage: widget.storage);
+    controller.selectBrushPreset(widget.initialBrushPreset);
     mediaImporter = widget.mediaImporter ?? MediaImporter();
     unawaited(controller.loadMediaImages());
     controller.addListener(_scheduleAutoSave);

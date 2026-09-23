@@ -21,6 +21,29 @@ void main() {
     expect(find.text('Todavía no hay proyectos guardados.'), findsOneWidget);
   });
 
+  testWidgets('la navegación principal abre pinceles recursos y ajustes', (
+    tester,
+  ) async {
+    final storage = _MemoryProjectStorage();
+    await tester.pumpWidget(VelyntoraApp(storage: storage));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Pinceles'));
+    await tester.pumpAndSettle();
+    expect(find.text('Lápiz'), findsOneWidget);
+    expect(find.text('Tinta'), findsOneWidget);
+    expect(find.text('Marcador'), findsOneWidget);
+
+    await tester.tap(find.text('Recursos'));
+    await tester.pumpAndSettle();
+    expect(find.text('Aún no hay recursos importados'), findsOneWidget);
+
+    await tester.tap(find.text('Ajustes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Resolución predeterminada'), findsOneWidget);
+    expect(find.text('Velocidad predeterminada'), findsOneWidget);
+  });
+
   testWidgets('editor cabe en una pantalla Android horizontal', (tester) async {
     tester.view.physicalSize = const Size(800, 480);
     tester.view.devicePixelRatio = 1;
