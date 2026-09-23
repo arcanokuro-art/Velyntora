@@ -10,9 +10,9 @@ concurrency:
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, ci/stable-format-diagnostic]
   pull_request:
-    branches: [main]
+    branches: [main, ci/stable-format-diagnostic]
 
 jobs:
   build-android:
