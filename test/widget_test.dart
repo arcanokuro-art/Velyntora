@@ -30,6 +30,7 @@ void main() {
 
     await tester.tap(find.text('Pinceles'));
     await tester.pumpAndSettle();
+    expect(find.text('Pinceles'), findsWidgets);
     expect(find.text('Lápiz'), findsOneWidget);
     expect(find.text('Tinta'), findsOneWidget);
     expect(find.text('Marcador'), findsOneWidget);
