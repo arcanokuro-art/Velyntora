@@ -503,7 +503,8 @@ class _ResourceLibrary extends StatelessWidget {
           return const _EmptySection(
             icon: Icons.perm_media_outlined,
             title: 'Aún no hay recursos importados',
-            message: 'Importa imágenes, audio o video desde el editor y aparecerán aquí.',
+            message:
+                'Importa imágenes, audio o video desde el editor y aparecerán aquí.',
           );
         }
         return ListView.separated(
