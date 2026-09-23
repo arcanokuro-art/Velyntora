@@ -650,6 +650,16 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void duplicateActiveLayer() {
+    final copy = AnimationLayer.fromJson(
+      Map<String, dynamic>.from(layer.toJson()),
+    )..name = '${layer.name} copia';
+    project.layers.insert(activeLayer, copy);
+    _clearHistory();
+    hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
   void selectLayer(int index) {
     activeLayer = index;
     clearSelection(notify: false);
