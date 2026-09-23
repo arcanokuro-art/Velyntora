@@ -669,8 +669,7 @@ class _ContextualToolBar extends StatelessWidget {
           ] else ...<Widget>[
             const _ToolHint(
               icon: Icons.touch_app_rounded,
-              text:
-                  'Arrastra para mover · pellizca para acercar · gira con dos dedos',
+              text: 'Arrastra para mover · pellizca para acercar · gira con dos dedos',
             ),
           ],
           const _ContextDivider(),
@@ -956,30 +955,40 @@ class _ToolBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         children: <Widget>[
-          for (final item in tools)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: IconButton.filledTonal(
-                onPressed: () => controller.selectTool(item.$1),
-                icon: Icon(item.$2),
-                tooltip: item.$3,
-                style: IconButton.styleFrom(
-                  fixedSize: const Size(40, 40),
-                  backgroundColor: controller.tool == item.$1
-                      ? VelyntoraColors.violet.withValues(alpha: 0.28)
-                      : Colors.transparent,
-                  foregroundColor: controller.tool == item.$1
-                      ? VelyntoraColors.cyan
-                      : VelyntoraColors.muted,
-                ),
-              ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: <Widget>[
+                for (final item in tools)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: IconButton.filledTonal(
+                      onPressed: () => controller.selectTool(item.$1),
+                      icon: Icon(item.$2),
+                      tooltip: item.$3,
+                      style: IconButton.styleFrom(
+                        fixedSize: const Size(40, 40),
+                        backgroundColor: controller.tool == item.$1
+                            ? VelyntoraColors.violet.withValues(alpha: 0.28)
+                            : Colors.transparent,
+                        foregroundColor: controller.tool == item.$1
+                            ? VelyntoraColors.cyan
+                            : VelyntoraColors.muted,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          const Spacer(),
+          ),
+          const Divider(height: 1),
           IconButton(
             onPressed: controller.clearFrame,
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar fotograma',
-            style: IconButton.styleFrom(fixedSize: const Size(40, 40)),
+            style: IconButton.styleFrom(
+              fixedSize: const Size(40, 40),
+              foregroundColor: VelyntoraColors.muted,
+            ),
           ),
         ],
       ),
