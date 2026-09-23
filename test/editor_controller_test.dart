@@ -36,6 +36,39 @@ void main() {
     expect(controller.activeLayer, 0);
   });
 
+  test('duplica una capa con todo su contenido', () {
+    final controller = EditorController(AnimationProject(name: 'Capas'));
+    controller.layer
+      ..name = 'Color'
+      ..opacity = 0.55
+      ..locked = true;
+    controller.layer
+        .strokesAt(0)
+        .add(
+          DrawingStroke(
+            points: const <Offset>[Offset(0.1, 0.2), Offset(0.3, 0.4)],
+            color: const Color(0xFF7357FF),
+            width: 8,
+          ),
+        );
+
+    controller.duplicateActiveLayer();
+
+    expect(controller.project.layers, hasLength(2));
+    expect(controller.layer.name, 'Color copia');
+    expect(controller.layer.opacity, 0.55);
+    expect(controller.layer.locked, isTrue);
+    expect(controller.layer.strokesAt(0), hasLength(1));
+    expect(
+      identical(
+        controller.project.layers[0].strokesAt(0),
+        controller.project.layers[1].strokesAt(0),
+      ),
+      isFalse,
+    );
+    expect(controller.hasUnsavedChanges, isTrue);
+  });
+
   test('serializa y recupera un proyecto', () {
     final project = AnimationProject(name: 'Prueba de formato');
     project.frameCount = 18;

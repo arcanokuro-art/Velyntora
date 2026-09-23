@@ -1271,6 +1271,11 @@ class _PropertiesPanel extends StatelessWidget {
                 tooltip: 'Eliminar capa',
               ),
               IconButton(
+                onPressed: controller.duplicateActiveLayer,
+                icon: const Icon(Icons.copy_rounded),
+                tooltip: 'Duplicar capa',
+              ),
+              IconButton(
                 onPressed: controller.addLayer,
                 icon: const Icon(Icons.add_rounded),
                 tooltip: 'Añadir capa',
