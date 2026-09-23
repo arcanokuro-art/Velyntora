@@ -669,7 +669,8 @@ class _ContextualToolBar extends StatelessWidget {
           ] else ...<Widget>[
             const _ToolHint(
               icon: Icons.touch_app_rounded,
-              text: 'Arrastra para mover · pellizca para acercar · gira con dos dedos',
+              text:
+                  'Arrastra para mover · pellizca para acercar · gira con dos dedos',
             ),
           ],
           const _ContextDivider(),
