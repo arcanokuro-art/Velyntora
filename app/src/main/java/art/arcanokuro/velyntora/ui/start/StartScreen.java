@@ -129,6 +129,7 @@ public final class StartScreen {
     private void openDocument(boolean animation){
         Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         intent.setType(animation?"*/*":"image/*");
         a.startActivityForResult(intent, animation?2002:2001);
     }
