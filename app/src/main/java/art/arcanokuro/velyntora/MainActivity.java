@@ -7,6 +7,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.database.Cursor;
 import android.provider.OpenableColumns;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import art.arcanokuro.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
@@ -20,8 +24,7 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         int background = Color.rgb(13,20,32);
-        getWindow().setStatusBarColor(background);
-        getWindow().setNavigationBarColor(background);
+        configureAdaptiveSystemBars(background);
         startScreen = new StartScreen(this);
         if(state!=null && state.getString("infoPage")!=null) {
             infoPage=state.getString("infoPage");
@@ -98,6 +101,37 @@ public class MainActivity extends Activity {
         outState.putString("openedDocumentUri",openedDocumentUri);
         outState.putString("infoPage",infoPage);
         super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Conserva el comportamiento adaptable de Krita en Android:
+     * Velyntora usa el área disponible mientras las barras del sistema están
+     * visibles y recupera automáticamente el espacio cuando Android las oculta.
+     * No se fuerza immersive/fullscreen; Android sigue controlando sus barras.
+     */
+    private void configureAdaptiveSystemBars(int background) {
+        Window window=getWindow();
+        window.setStatusBarColor(background);
+        window.setNavigationBarColor(background);
+
+        // false = el contenido se mide dentro del área útil del sistema.
+        // Al aparecer/desaparecer las barras, Android vuelve a medir la vista raíz.
+        if(android.os.Build.VERSION.SDK_INT >= 30) {
+            window.setDecorFitsSystemWindows(true);
+            WindowInsetsController controller=window.getInsetsController();
+            if(controller!=null) {
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_DEFAULT);
+            }
+        } else {
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        }
+
+        // Solicita una nueva medición cuando cambien los insets del sistema.
+        window.getDecorView().setOnApplyWindowInsetsListener((view,insets) -> {
+            view.requestLayout();
+            return view.onApplyWindowInsets(insets);
+        });
     }
 
     private String displayName(Uri uri) {
