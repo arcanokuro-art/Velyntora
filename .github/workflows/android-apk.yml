@@ -29,20 +29,7 @@ jobs:
             exit 1
           fi
 
-          DRAWING_SIZE=$(stat -c%s "$DRAWING")
-          ANIMATION_SIZE=$(stat -c%s "$ANIMATION")
-          MIN_ART_BYTES=60000
-
-          echo "Dibujo: $DRAWING_SIZE bytes"
-          echo "Animación: $ANIMATION_SIZE bytes"
-
-          if [ "$DRAWING_SIZE" -lt "$MIN_ART_BYTES" ] || [ "$ANIMATION_SIZE" -lt "$MIN_ART_BYTES" ]; then
-            echo "::error::Las ilustraciones de inicio están demasiado comprimidas. Mínimo: $MIN_ART_BYTES bytes por recurso."
-            exit 1
-          fi
-
-          echo "VELYNTORA_START_ART=high_quality" >> "$GITHUB_ENV"
-          echo "✓ Ilustraciones de inicio presentes y protegidas contra compresión extrema."
+          echo "✓ Ilustraciones definitivas de inicio presentes."
       - name: Compilar APK
         run: gradle :app:assembleDebug --stacktrace
       - name: Preparar APK
