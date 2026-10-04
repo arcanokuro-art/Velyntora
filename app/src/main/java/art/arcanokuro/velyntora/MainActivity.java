@@ -3,14 +3,33 @@ package art.arcanokuro.velyntora;
 import android.app.Activity;
 import android.os.Bundle;
 import android.graphics.Color;
+import android.content.Intent;
+import android.net.Uri;
 import art.arcanokuro.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
+    private StartScreen startScreen;
+
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         int background = Color.rgb(13,20,32);
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
-        setContentView(new StartScreen(this).create());
+        startScreen = new StartScreen(this);
+        setContentView(startScreen.create());
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode!=RESULT_OK || data==null) return;
+        Uri uri=data.getData();
+        if(uri==null) return;
+        boolean animation=requestCode==2002;
+        if(requestCode==2001 || requestCode==2002) {
+            try {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (SecurityException ignored) {}
+            setContentView(startScreen.createWorkspace(animation,uri.toString()));
+        }
     }
 }
