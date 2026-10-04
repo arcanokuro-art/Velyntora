@@ -100,24 +100,29 @@ public final class StartScreen {
         a.startActivityForResult(intent, animation?2002:2001);
     }
 
-    private void openWorkspace(boolean animation){
+    public View createWorkspace(boolean animation, String source){
         LinearLayout workspace=col();
         workspace.setBackgroundColor(bg);
         workspace.setGravity(Gravity.CENTER);
         TextView title=txt(animation?"Entorno de Animación":"Entorno de Dibujo",28,text,true);
         title.setGravity(Gravity.CENTER);
         workspace.addView(title,new LinearLayout.LayoutParams(-1,dp(64)));
-        TextView status=txt(animation
-                ?"Preparado para integrar el núcleo de animación de Velyntora."
-                :"Preparado para integrar el núcleo de dibujo de Velyntora.",15,muted,false);
+        String message=source==null
+                ? (animation?"Preparado para integrar el núcleo de animación de Velyntora.":"Preparado para integrar el núcleo de dibujo de Velyntora.")
+                : "Archivo seleccionado: "+source;
+        TextView status=txt(message,15,muted,false);
         status.setGravity(Gravity.CENTER);
         workspace.addView(status,new LinearLayout.LayoutParams(-1,dp(48)));
         Button back=outline("Volver al inicio");
         back.setOnClickListener(v -> a.setContentView(create()));
-        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(220),dp(52));
+        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(360),dp(52));
         bp.gravity=Gravity.CENTER_HORIZONTAL;
         workspace.addView(back,bp);
-        a.setContentView(workspace);
+        return workspace;
+    }
+
+    private void openWorkspace(boolean animation){
+        a.setContentView(createWorkspace(animation,null));
     }
 
     private View recents(){
