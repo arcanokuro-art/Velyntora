@@ -43,6 +43,15 @@ jobs:
 
           echo "VELYNTORA_START_ART=high_quality" >> "$GITHUB_ENV"
           echo "✓ Ilustraciones de inicio presentes y protegidas contra compresión extrema."
+      - name: Preparar recursos HQ para Android
+        run: |
+          mkdir -p app/build/generated/velyntora-start-assets
+          cp app/src/main/res/drawable-nodpi/start_drawing_HQ.webp app/build/generated/velyntora-start-assets/start_drawing_HQ.webp
+          cp app/src/main/res/drawable-nodpi/start_animation_HQ.webp app/build/generated/velyntora-start-assets/start_animation_HQ.webp
+          rm app/src/main/res/drawable-nodpi/start_drawing_HQ.webp
+          rm app/src/main/res/drawable-nodpi/start_animation_HQ.webp
+          test -s app/build/generated/velyntora-start-assets/start_drawing_HQ.webp
+          test -s app/build/generated/velyntora-start-assets/start_animation_HQ.webp
       - name: Compilar APK
         run: gradle :app:assembleDebug --stacktrace
       - name: Preparar APK
