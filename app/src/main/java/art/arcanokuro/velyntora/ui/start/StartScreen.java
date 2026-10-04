@@ -1,6 +1,7 @@
 package art.arcanokuro.velyntora.ui.start;
 
 import android.app.Activity;
+import art.arcanokuro.velyntora.MainActivity;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -56,7 +57,7 @@ public final class StartScreen {
         body.setGravity(Gravity.CENTER);
         page.addView(body,new LinearLayout.LayoutParams(-1,dp(70)));
         Button back=outline("Volver al inicio");
-        back.setOnClickListener(v -> a.setContentView(create()));
+        back.setOnClickListener(v -> showHome());
         LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(240),dp(52));
         bp.gravity=Gravity.CENTER_HORIZONTAL;
         page.addView(back,bp);
@@ -153,7 +154,7 @@ public final class StartScreen {
         status.setGravity(Gravity.CENTER);
         workspace.addView(status,new LinearLayout.LayoutParams(-1,dp(48)));
         Button back=outline("Volver al inicio");
-        back.setOnClickListener(v -> a.setContentView(create()));
+        back.setOnClickListener(v -> showHome());
         LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(360),dp(52));
         bp.gravity=Gravity.CENTER_HORIZONTAL;
         workspace.addView(back,bp);
@@ -161,7 +162,13 @@ public final class StartScreen {
     }
 
     private void openWorkspace(boolean animation){
-        a.setContentView(createWorkspace(animation,null));
+        if(a instanceof MainActivity) ((MainActivity)a).showWorkspace(animation,null);
+        else a.setContentView(createWorkspace(animation,null));
+    }
+
+    private void showHome(){
+        if(a instanceof MainActivity) ((MainActivity)a).showHome();
+        else a.setContentView(create());
     }
 
     private View recents(){
