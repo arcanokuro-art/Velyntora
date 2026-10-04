@@ -102,8 +102,10 @@ public final class StartScreen {
         FrameLayout artLayer=new FrameLayout(a);
         artLayer.setClipToPadding(false);
         ImageView artwork=new ImageView(a);
-        int artId=a.getResources().getIdentifier(animation?"start_animation":"start_drawing","drawable",a.getPackageName());
-        if(artId!=0){
+        int artId=animation
+                ? art.arcanokuro.velyntora.R.drawable.start_animation
+                : art.arcanokuro.velyntora.R.drawable.start_drawing;
+        {
             artwork.setImageResource(artId);
             artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
             artwork.setAlpha(1f);
