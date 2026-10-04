@@ -14,6 +14,7 @@ public class MainActivity extends Activity {
     private boolean workspaceOpen=false;
     private boolean animationMode=false;
     private String openedDocument=null;
+    private String infoPage=null;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -21,7 +22,10 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
         startScreen = new StartScreen(this);
-        if(state!=null && state.getBoolean("workspaceOpen",false)) {
+        if(state!=null && state.getString("infoPage")!=null) {
+            infoPage=state.getString("infoPage");
+            setContentView(startScreen.createInfoPage(infoPage));
+        } else if(state!=null && state.getBoolean("workspaceOpen",false)) {
             workspaceOpen=true;
             animationMode=state.getBoolean("animationMode",false);
             openedDocument=state.getString("openedDocument");
@@ -49,6 +53,7 @@ public class MainActivity extends Activity {
         workspaceOpen=false;
         animationMode=false;
         openedDocument=null;
+        infoPage=null;
         setContentView(startScreen.create());
     }
 
@@ -56,13 +61,22 @@ public class MainActivity extends Activity {
         workspaceOpen=true;
         animationMode=animation;
         openedDocument=document;
+        infoPage=null;
         setContentView(startScreen.createWorkspace(animationMode,openedDocument));
+    }
+
+    public void showInfo(String page) {
+        workspaceOpen=false;
+        openedDocument=null;
+        infoPage=page;
+        setContentView(startScreen.createInfoPage(page));
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean("workspaceOpen",workspaceOpen);
         outState.putBoolean("animationMode",animationMode);
         outState.putString("openedDocument",openedDocument);
+        outState.putString("infoPage",infoPage);
         super.onSaveInstanceState(outState);
     }
 
