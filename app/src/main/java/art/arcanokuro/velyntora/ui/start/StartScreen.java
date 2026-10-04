@@ -2,6 +2,8 @@ package art.arcanokuro.velyntora.ui.start;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
@@ -38,10 +40,27 @@ public final class StartScreen {
     private View brand(){
         FrameLayout box=new FrameLayout(a);
         ImageView logo=new ImageView(a);
-        logo.setImageResource(art.arcanokuro.velyntora.R.drawable.velyntora_logo);
+        logo.setImageBitmap(loadTransparentLogo());
         logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         box.addView(logo,new FrameLayout.LayoutParams(-1,-1));
         return box;
+    }
+
+    private Bitmap loadTransparentLogo(){
+        Bitmap source=BitmapFactory.decodeResource(a.getResources(), art.arcanokuro.velyntora.R.drawable.velyntora_logo)
+                .copy(Bitmap.Config.ARGB_8888,true);
+        int w=source.getWidth(), h=source.getHeight();
+        int[] pixels=new int[w*h];
+        source.getPixels(pixels,0,w,0,0,w,h);
+        for(int i=0;i<pixels.length;i++){
+            int p=pixels[i];
+            int r=Color.red(p), g=Color.green(p), b=Color.blue(p);
+            // El fondo negro del archivo original se vuelve totalmente transparente.
+            // Conserva las letras blancas y la A violeta.
+            if(r<28 && g<28 && b<28) pixels[i]=Color.TRANSPARENT;
+        }
+        source.setPixels(pixels,0,w,0,0,w,h);
+        return source;
     }
 
     private View mode(boolean animation){
