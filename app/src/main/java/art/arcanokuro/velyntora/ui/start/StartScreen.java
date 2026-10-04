@@ -36,9 +36,12 @@ public final class StartScreen {
     }
 
     private View brand(){
-        LinearLayout l=col(); l.setGravity(Gravity.CENTER);
-        TextView n=txt("VELYNTORΛ",34,Color.WHITE,false); n.setGravity(Gravity.CENTER); n.setLetterSpacing(.22f); l.addView(n);
-        TextView s=txt("ARTE SIN LÍMITES",10,muted,false); s.setGravity(Gravity.CENTER); s.setLetterSpacing(.28f); l.addView(s); return l;
+        FrameLayout box=new FrameLayout(a);
+        ImageView logo=new ImageView(a);
+        logo.setImageResource(art.arcanokuro.velyntora.R.drawable.velyntora_logo);
+        logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        box.addView(logo,new FrameLayout.LayoutParams(-1,-1));
+        return box;
     }
 
     private View mode(boolean animation){
