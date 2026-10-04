@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.graphics.Color;
 import android.content.Intent;
 import android.net.Uri;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 import art.arcanokuro.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
@@ -29,7 +31,26 @@ public class MainActivity extends Activity {
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (SecurityException ignored) {}
-            setContentView(startScreen.createWorkspace(animation,uri.toString()));
+            setContentView(startScreen.createWorkspace(animation,displayName(uri)));
         }
     }
+    private String displayName(Uri uri) {
+        Cursor cursor=null;
+        try {
+            cursor=getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME},null,null,null);
+            if(cursor!=null && cursor.moveToFirst()) {
+                int index=cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if(index>=0) {
+                    String name=cursor.getString(index);
+                    if(name!=null && !name.trim().isEmpty()) return name;
+                }
+            }
+        } catch (RuntimeException ignored) {
+        } finally {
+            if(cursor!=null) cursor.close();
+        }
+        String fallback=uri.getLastPathSegment();
+        return fallback==null ? "Documento seleccionado" : fallback;
+    }
 }
+
