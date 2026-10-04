@@ -25,9 +25,9 @@ public final class StartScreen {
         root.addView(q,new LinearLayout.LayoutParams(-1,dp(50)));
 
         LinearLayout choices=row(); choices.setGravity(Gravity.CENTER);
-        choices.addView(mode(false),new LinearLayout.LayoutParams(0,0,1));
+        choices.addView(mode(false),new LinearLayout.LayoutParams(0,-1,1));
         Space gap=new Space(a); choices.addView(gap,new LinearLayout.LayoutParams(dp(18),1));
-        choices.addView(mode(true),new LinearLayout.LayoutParams(0,0,1));
+        choices.addView(mode(true),new LinearLayout.LayoutParams(0,-1,1));
         root.addView(choices,new LinearLayout.LayoutParams(-1,0,1));
 
         root.addView(recents(),new LinearLayout.LayoutParams(-1,dp(150)));
