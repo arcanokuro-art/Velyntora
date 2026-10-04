@@ -1,7 +1,6 @@
 <resources>
-    <style name="Theme.Velyntora" parent="Theme.AppCompat.NoActionBar">
+    <style name="Theme.Velyntora" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:windowActionModeOverlay">true</item>
         <item name="android:colorAccent">#9E9E9E</item>
         <item name="android:navigationBarColor">#252525</item>
         <item name="android:statusBarColor">#252525</item>
