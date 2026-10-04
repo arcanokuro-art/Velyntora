@@ -9,7 +9,6 @@ import android.database.Cursor;
 import android.provider.OpenableColumns;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import art.arcanokuro.velyntora.ui.start.StartScreen;
 
@@ -127,11 +126,6 @@ public class MainActivity extends Activity {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         }
 
-        // Solicita una nueva medición cuando cambien los insets del sistema.
-        window.getDecorView().setOnApplyWindowInsetsListener((view,insets) -> {
-            view.requestLayout();
-            return view.onApplyWindowInsets(insets);
-        });
     }
 
     private String displayName(Uri uri) {
