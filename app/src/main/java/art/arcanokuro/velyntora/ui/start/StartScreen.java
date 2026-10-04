@@ -31,11 +31,36 @@ public final class StartScreen {
 
         root.addView(recents(),new LinearLayout.LayoutParams(-1,dp(150)));
         LinearLayout footer=row(); footer.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-        footer.addView(outline("⚙  Preferencias de Velyntora"));
+        Button preferences=outline("⚙  Preferencias de Velyntora");
+        preferences.setOnClickListener(v -> a.setContentView(createInfoPage("Preferencias de Velyntora",
+                "Las opciones de Velyntora se configurarán aquí.")));
+        footer.addView(preferences);
         Space fgap=new Space(a); footer.addView(fgap,new LinearLayout.LayoutParams(dp(12),1));
-        footer.addView(outline("?  Ayuda"));
+        Button help=outline("?  Ayuda");
+        help.setOnClickListener(v -> a.setContentView(createInfoPage("Ayuda",
+                "Ayuda y documentación de Velyntora.")));
+        footer.addView(help);
         root.addView(footer,new LinearLayout.LayoutParams(-1,dp(60)));
         return root;
+    }
+
+    private View createInfoPage(String titleText,String bodyText){
+        LinearLayout page=col();
+        page.setBackgroundColor(bg);
+        page.setPadding(dp(40),dp(32),dp(40),dp(32));
+        page.setGravity(Gravity.CENTER);
+        TextView title=txt(titleText,28,text,true);
+        title.setGravity(Gravity.CENTER);
+        page.addView(title,new LinearLayout.LayoutParams(-1,dp(70)));
+        TextView body=txt(bodyText,16,muted,false);
+        body.setGravity(Gravity.CENTER);
+        page.addView(body,new LinearLayout.LayoutParams(-1,dp(70)));
+        Button back=outline("Volver al inicio");
+        back.setOnClickListener(v -> a.setContentView(create()));
+        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(240),dp(52));
+        bp.gravity=Gravity.CENTER_HORIZONTAL;
+        page.addView(back,bp);
+        return page;
     }
 
     private View brand(){
