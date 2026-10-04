@@ -1,0 +1,40 @@
+name: Importar arte de inicio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-start-art.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import-art:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruir ilustraciones
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app/src/main/res/drawable-nodpi
+          cat .github/art-transfer/draw/part_* | base64 -d > app/src/main/res/drawable-nodpi/start_drawing.webp
+          cat .github/art-transfer/anim/part_* | base64 -d > app/src/main/res/drawable-nodpi/start_animation.webp
+          echo "57cfda6b1c0ca5195e7df484edb7e6e28af891a12f15b0e2c23756171d0eb0b8  app/src/main/res/drawable-nodpi/start_drawing.webp" | sha256sum -c -
+          echo "c10bc79e554d496c31ac7913c733a8c230592f8ad70fc9acb5877da1c83b242d  app/src/main/res/drawable-nodpi/start_animation.webp" | sha256sum -c -
+          file app/src/main/res/drawable-nodpi/start_drawing.webp
+          file app/src/main/res/drawable-nodpi/start_animation.webp
+
+      - name: Guardar recursos binarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/res/drawable-nodpi/start_drawing.webp
+          git add app/src/main/res/drawable-nodpi/start_animation.webp
+          git commit -m "Add Velyntora start artwork assets"
+          git push
