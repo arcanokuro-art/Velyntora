@@ -3,7 +3,6 @@ plugins { id 'com.android.application' }
 android {
     namespace 'art.arcanokuro.velyntora'
     compileSdk 35
-
     defaultConfig {
         applicationId 'art.arcanokuro.velyntora'
         minSdk 26
@@ -11,8 +10,4 @@ android {
         versionCode 1
         versionName '0.1-dev'
     }
-}
-
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
 }
