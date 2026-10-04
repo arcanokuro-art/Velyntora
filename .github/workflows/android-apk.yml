@@ -20,6 +20,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Verificar ilustraciones de inicio
+        run: |
+          DRAWING=app/src/main/res/drawable-nodpi/start_drawing.webp
+          ANIMATION=app/src/main/res/drawable-nodpi/start_animation.webp
+          if [ -f "$DRAWING" ] && [ -f "$ANIMATION" ]; then
+            echo "VELYNTORA_START_ART=complete" >> "$GITHUB_ENV"
+            echo "✓ Ilustraciones Dibujo y Animación incluidas."
+          else
+            echo "VELYNTORA_START_ART=pending" >> "$GITHUB_ENV"
+            echo "::notice::Las ilustraciones de inicio aún no están incluidas en el APK."
+          fi
       - name: Compilar APK
         run: gradle :app:assembleDebug --stacktrace
       - name: Preparar APK
