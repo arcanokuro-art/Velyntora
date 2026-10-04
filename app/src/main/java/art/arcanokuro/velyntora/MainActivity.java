@@ -41,11 +41,22 @@ public class MainActivity extends Activity {
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (SecurityException ignored) {}
-            workspaceOpen=true;
-            animationMode=animation;
-            openedDocument=displayName(uri);
-            setContentView(startScreen.createWorkspace(animationMode,openedDocument));
+            showWorkspace(animation,displayName(uri));
         }
+    }
+
+    public void showHome() {
+        workspaceOpen=false;
+        animationMode=false;
+        openedDocument=null;
+        setContentView(startScreen.create());
+    }
+
+    public void showWorkspace(boolean animation, String document) {
+        workspaceOpen=true;
+        animationMode=animation;
+        openedDocument=document;
+        setContentView(startScreen.createWorkspace(animationMode,openedDocument));
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {
