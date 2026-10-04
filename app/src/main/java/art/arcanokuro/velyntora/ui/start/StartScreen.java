@@ -33,19 +33,20 @@ public final class StartScreen {
         root.addView(recents(),new LinearLayout.LayoutParams(-1,dp(150)));
         LinearLayout footer=row(); footer.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         Button preferences=outline("⚙  Preferencias de Velyntora");
-        preferences.setOnClickListener(v -> a.setContentView(createInfoPage("Preferencias de Velyntora",
-                "Las opciones de Velyntora se configurarán aquí.")));
+        preferences.setOnClickListener(v -> showInfo("preferences"));
         footer.addView(preferences);
         Space fgap=new Space(a); footer.addView(fgap,new LinearLayout.LayoutParams(dp(12),1));
         Button help=outline("?  Ayuda");
-        help.setOnClickListener(v -> a.setContentView(createInfoPage("Ayuda",
-                "Ayuda y documentación de Velyntora.")));
+        help.setOnClickListener(v -> showInfo("help"));
         footer.addView(help);
         root.addView(footer,new LinearLayout.LayoutParams(-1,dp(60)));
         return root;
     }
 
-    private View createInfoPage(String titleText,String bodyText){
+    public View createInfoPage(String page){
+        boolean preferences="preferences".equals(page);
+        String titleText=preferences?"Preferencias de Velyntora":"Ayuda";
+        String bodyText=preferences?"Las opciones de Velyntora se configurarán aquí.":"Ayuda y documentación de Velyntora.";
         LinearLayout page=col();
         page.setBackgroundColor(bg);
         page.setPadding(dp(40),dp(32),dp(40),dp(32));
@@ -164,6 +165,11 @@ public final class StartScreen {
     private void openWorkspace(boolean animation){
         if(a instanceof MainActivity) ((MainActivity)a).showWorkspace(animation,null);
         else a.setContentView(createWorkspace(animation,null));
+    }
+
+    private void showInfo(String page){
+        if(a instanceof MainActivity) ((MainActivity)a).showInfo(page);
+        else a.setContentView(createInfoPage(page));
     }
 
     private void showHome(){
