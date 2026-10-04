@@ -69,12 +69,14 @@ public final class StartScreen {
           animation?new int[]{Color.rgb(9,36,72),Color.rgb(14,24,40)}:new int[]{Color.rgb(59,22,72),Color.rgb(24,20,38)});
         gd.setCornerRadius(dp(14)); gd.setStroke(dp(1),animation?Color.rgb(33,137,255):Color.rgb(185,61,207)); card.setBackground(gd);
 
-        // Exact supplied artwork will occupy this full bleed layer once stored as Android resources.
-        TextView art=txt(animation?"ANIMACIÓN":"DIBUJO",12,animation?Color.rgb(68,151,255):Color.rgb(213,106,229),true);
-        art.setAlpha(.16f); art.setGravity(animation?Gravity.RIGHT|Gravity.CENTER_VERTICAL:Gravity.LEFT|Gravity.CENTER_VERTICAL);
-        card.addView(art,new FrameLayout.LayoutParams(-1,-1));
+        // Capa reservada para la ilustración exacta del modo. Se mantiene separada
+        // del contenido para poder posicionarla a izquierda/derecha sin mover los botones.
+        FrameLayout artLayer=new FrameLayout(a);
+        artLayer.setClipToPadding(false);
+        card.addView(artLayer,new FrameLayout.LayoutParams(-1,-1));
 
-        LinearLayout content=col(); content.setGravity(Gravity.CENTER); content.setPadding(dp(34),dp(24),dp(34),dp(20));
+        LinearLayout content=col(); content.setGravity(Gravity.CENTER);
+        content.setPadding(animation?dp(26):dp(150),dp(24),animation?dp(150):dp(26),dp(20));
         TextView icon=txt(animation?"▣":"✎",38,text,false); icon.setGravity(Gravity.CENTER); content.addView(icon);
         TextView title=txt(animation?"ANIMACIÓN":"DIBUJO",25,text,true); title.setGravity(Gravity.CENTER); content.addView(title);
         TextView desc=txt(animation?"Crea animaciones 2D, fotogramas\ny secuencias con todas las herramientas.":"Crea ilustraciones, edita imágenes\ny da vida a tus ideas.",15,Color.rgb(210,216,228),false);
