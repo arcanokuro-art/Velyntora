@@ -147,16 +147,14 @@ public final class StartScreen {
     }
 
     public View createWorkspace(boolean animation, String source){
-        if(!animation) return createDrawingWorkspace(source);
-
         LinearLayout workspace=col();
         workspace.setBackgroundColor(bg);
         workspace.setGravity(Gravity.CENTER);
-        TextView title=txt("Entorno de Animación",28,text,true);
+        TextView title=txt(animation?"Entorno de Animación":"Entorno de Dibujo",28,text,true);
         title.setGravity(Gravity.CENTER);
         workspace.addView(title,new LinearLayout.LayoutParams(-1,dp(64)));
         String message=source==null
-                ? "Preparado para integrar el núcleo de animación de Velyntora."
+                ? (animation?"Preparado para integrar el núcleo de animación de Velyntora.":"Preparado para integrar el núcleo de dibujo de Velyntora.")
                 : "Archivo seleccionado: "+source;
         TextView status=txt(message,15,muted,false);
         status.setGravity(Gravity.CENTER);
@@ -167,100 +165,6 @@ public final class StartScreen {
         bp.gravity=Gravity.CENTER_HORIZONTAL;
         workspace.addView(back,bp);
         return workspace;
-    }
-
-    private View createDrawingWorkspace(String source){
-        LinearLayout root=col();
-        root.setBackgroundColor(Color.rgb(20,22,27));
-
-        // Barra superior: conserva la organización acordada para Velyntora.
-        LinearLayout menu=row();
-        menu.setGravity(Gravity.CENTER_VERTICAL);
-        menu.setPadding(dp(8),0,dp(8),0);
-        String[] menus={"Archivo","Editar","Ver","Imagen","Capa","Seleccionar","Filtro","Herramientas","Configuración","Ayuda"};
-        for(String item:menus){
-            TextView entry=txt(item,13,text,false);
-            entry.setGravity(Gravity.CENTER);
-            entry.setPadding(dp(10),0,dp(10),0);
-            menu.addView(entry,new LinearLayout.LayoutParams(-2,-1));
-        }
-        Space menuSpace=new Space(a);
-        menu.addView(menuSpace,new LinearLayout.LayoutParams(0,1,1));
-        Button home=outline("Inicio");
-        home.setOnClickListener(v -> showHome());
-        menu.addView(home,new LinearLayout.LayoutParams(dp(92),dp(38)));
-        root.addView(menu,new LinearLayout.LayoutParams(-1,dp(48)));
-
-        LinearLayout body=row();
-
-        // Herramientas: panel reservado en tres columnas, como se definió.
-        LinearLayout tools=col();
-        tools.setPadding(dp(8),dp(8),dp(8),dp(8));
-        tools.setBackgroundColor(Color.rgb(26,29,36));
-        TextView toolsTitle=txt("Herramientas",14,text,true);
-        toolsTitle.setGravity(Gravity.CENTER);
-        tools.addView(toolsTitle,new LinearLayout.LayoutParams(-1,dp(36)));
-        GridLayout toolGrid=new GridLayout(a);
-        toolGrid.setColumnCount(3);
-        String[] toolNames={"Pincel","Borrador","Línea/Curva","Selección","Mover","Relleno","Texto","Formas","Color"};
-        for(String tool:toolNames){
-            Button b=outline(tool);
-            b.setTextSize(10);
-            toolGrid.addView(b,new GridLayout.LayoutParams(
-                    GridLayout.spec(GridLayout.UNDEFINED,1f),
-                    GridLayout.spec(GridLayout.UNDEFINED,1f)));
-        }
-        tools.addView(toolGrid,new LinearLayout.LayoutParams(-1,0,1));
-        body.addView(tools,new LinearLayout.LayoutParams(dp(220),-1));
-
-        // Centro: superficie de lienzo independiente del resto de paneles.
-        FrameLayout canvasArea=new FrameLayout(a);
-        canvasArea.setBackgroundColor(Color.rgb(42,45,52));
-        TextView canvas=txt(source==null?"Lienzo":"Lienzo · "+source,15,Color.rgb(125,132,145),false);
-        canvas.setGravity(Gravity.CENTER);
-        GradientDrawable paper=round(Color.rgb(245,245,245),Color.rgb(82,88,99),4);
-        canvas.setBackground(paper);
-        FrameLayout.LayoutParams canvasParams=new FrameLayout.LayoutParams(dp(520),dp(340));
-        canvasParams.gravity=Gravity.CENTER;
-        canvasArea.addView(canvas,canvasParams);
-        body.addView(canvasArea,new LinearLayout.LayoutParams(0,-1,1));
-
-        // Panel derecho reservado para el sistema de capas del núcleo de Krita.
-        LinearLayout layers=col();
-        layers.setPadding(dp(10),dp(8),dp(10),dp(8));
-        layers.setBackgroundColor(Color.rgb(26,29,36));
-        TextView layersTitle=txt("Capas",15,text,true);
-        layers.addView(layersTitle,new LinearLayout.LayoutParams(-1,dp(38)));
-        TextView layer=txt("▣  Capa 1",13,text,false);
-        layer.setGravity(Gravity.CENTER_VERTICAL);
-        layer.setPadding(dp(10),0,0,0);
-        layer.setBackground(round(Color.rgb(42,46,56),Color.TRANSPARENT,6));
-        layers.addView(layer,new LinearLayout.LayoutParams(-1,dp(46)));
-        body.addView(layers,new LinearLayout.LayoutParams(dp(210),-1));
-
-        root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
-
-        // Paleta inferior estilo Pinta: estructura primero; motor de color después.
-        LinearLayout palette=row();
-        palette.setGravity(Gravity.CENTER_VERTICAL);
-        palette.setPadding(dp(12),0,dp(12),0);
-        palette.setBackgroundColor(Color.rgb(24,27,33));
-        TextView paletteTitle=txt("Colores",13,text,true);
-        palette.addView(paletteTitle,new LinearLayout.LayoutParams(dp(70),-1));
-        int[] colors={Color.BLACK,Color.DKGRAY,Color.GRAY,Color.WHITE,Color.RED,Color.YELLOW,Color.GREEN,Color.CYAN,Color.BLUE,Color.MAGENTA};
-        for(int c:colors){
-            TextView swatch=new TextView(a);
-            swatch.setBackground(round(c,Color.rgb(95,100,110),5));
-            LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(32),dp(32));
-            cp.setMargins(dp(4),0,dp(4),0);
-            palette.addView(swatch,cp);
-        }
-        Space paletteSpace=new Space(a);
-        palette.addView(paletteSpace,new LinearLayout.LayoutParams(0,1,1));
-        palette.addView(outline("+ Guardar color"),new LinearLayout.LayoutParams(dp(130),dp(38)));
-        root.addView(palette,new LinearLayout.LayoutParams(-1,dp(54)));
-
-        return root;
     }
 
     private void openWorkspace(boolean animation){
