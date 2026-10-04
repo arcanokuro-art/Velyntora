@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -19,7 +22,15 @@ jobs:
           gradle-version: '8.9'
       - name: Compilar APK
         run: gradle :app:assembleDebug --stacktrace
+      - name: Preparar APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk Velyntora-dev.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Velyntora-dev-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: Velyntora-dev.apk
+      - name: Publicar APK en Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view dev-latest >/dev/null 2>&1 || gh release create dev-latest --title "Velyntora - APK de prueba" --notes "Compilación de desarrollo para probar el avance actual de Velyntora en Android." --prerelease
+          gh release upload dev-latest Velyntora-dev.apk --clobber
