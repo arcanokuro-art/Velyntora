@@ -72,6 +72,16 @@ public class MainActivity extends Activity {
         setContentView(startScreen.createInfoPage(page));
     }
 
+    @Override public void onBackPressed() {
+        // En las pantallas internas, Atrás siempre vuelve al inicio de Velyntora
+        // en lugar de cerrar inesperadamente la aplicación.
+        if(workspaceOpen || infoPage!=null) {
+            showHome();
+            return;
+        }
+        super.onBackPressed();
+    }
+
     @Override protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean("workspaceOpen",workspaceOpen);
         outState.putBoolean("animationMode",animationMode);
