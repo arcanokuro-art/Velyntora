@@ -11,6 +11,9 @@ import art.arcanokuro.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
     private StartScreen startScreen;
+    private boolean workspaceOpen=false;
+    private boolean animationMode=false;
+    private String openedDocument=null;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -18,7 +21,14 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
         startScreen = new StartScreen(this);
-        setContentView(startScreen.create());
+        if(state!=null && state.getBoolean("workspaceOpen",false)) {
+            workspaceOpen=true;
+            animationMode=state.getBoolean("animationMode",false);
+            openedDocument=state.getString("openedDocument");
+            setContentView(startScreen.createWorkspace(animationMode,openedDocument));
+        } else {
+            setContentView(startScreen.create());
+        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -31,9 +41,20 @@ public class MainActivity extends Activity {
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (SecurityException ignored) {}
-            setContentView(startScreen.createWorkspace(animation,displayName(uri)));
+            workspaceOpen=true;
+            animationMode=animation;
+            openedDocument=displayName(uri);
+            setContentView(startScreen.createWorkspace(animationMode,openedDocument));
         }
     }
+
+    @Override protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean("workspaceOpen",workspaceOpen);
+        outState.putBoolean("animationMode",animationMode);
+        outState.putString("openedDocument",openedDocument);
+        super.onSaveInstanceState(outState);
+    }
+
     private String displayName(Uri uri) {
         Cursor cursor=null;
         try {
