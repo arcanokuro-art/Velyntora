@@ -10,8 +10,5 @@
         <item name="android:statusBarColor">#0D1420</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
-        <!-- Igual que Krita: dejar a Android/ventana gestionar el área útil. -->
-        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>
