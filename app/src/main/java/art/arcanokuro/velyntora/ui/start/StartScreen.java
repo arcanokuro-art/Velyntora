@@ -105,7 +105,12 @@ public final class StartScreen {
             artwork.setImageResource(artId);
             artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
             artwork.setAlpha(.88f);
-            artLayer.addView(artwork,new FrameLayout.LayoutParams(-1,-1));
+            // Mantiene la composición espejo: Dibujo hacia la izquierda,
+            // Animación hacia la derecha, sin desplazar los controles centrales.
+            artwork.setTranslationX(animation ? dp(28) : -dp(28));
+            FrameLayout.LayoutParams artParams=new FrameLayout.LayoutParams(-1,-1);
+            artParams.gravity=animation ? Gravity.RIGHT|Gravity.CENTER_VERTICAL : Gravity.LEFT|Gravity.CENTER_VERTICAL;
+            artLayer.addView(artwork,artParams);
         }
         card.addView(artLayer,new FrameLayout.LayoutParams(-1,-1));
 
