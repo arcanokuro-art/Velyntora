@@ -43,8 +43,8 @@ public final class StartScreen {
         return root;
     }
 
-    public View createInfoPage(String page){
-        boolean preferences="preferences".equals(page);
+    public View createInfoPage(String pageId){
+        boolean preferences="preferences".equals(pageId);
         String titleText=preferences?"Preferencias de Velyntora":"Ayuda";
         String bodyText=preferences?"Las opciones de Velyntora se configurarán aquí.":"Ayuda y documentación de Velyntora.";
         LinearLayout page=col();
