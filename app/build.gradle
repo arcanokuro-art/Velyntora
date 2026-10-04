@@ -1,6 +1,17 @@
 plugins { id 'com.android.application' }
 
 android {
+    sourceSets {
+        main {
+            // Los archivos HQ conservan los nombres elegidos por el proyecto.
+            // Android exige minúsculas para recursos compilados, por eso se excluyen
+            // del merge de res y se empaquetan como assets sin renombrarlos.
+            res {
+                excludes += ['drawable-nodpi/start_animation_HQ.webp', 'drawable-nodpi/start_drawing_HQ.webp']
+            }
+            assets.srcDir 'src/main/res/drawable-nodpi'
+        }
+    }
     namespace 'art.arcanokuro.velyntora'
     compileSdk 35
     defaultConfig {
