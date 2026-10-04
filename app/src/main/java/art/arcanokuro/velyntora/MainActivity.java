@@ -14,6 +14,7 @@ public class MainActivity extends Activity {
     private boolean workspaceOpen=false;
     private boolean animationMode=false;
     private String openedDocument=null;
+    private String openedDocumentUri=null;
     private String infoPage=null;
 
     @Override protected void onCreate(Bundle state) {
@@ -29,6 +30,7 @@ public class MainActivity extends Activity {
             workspaceOpen=true;
             animationMode=state.getBoolean("animationMode",false);
             openedDocument=state.getString("openedDocument");
+            openedDocumentUri=state.getString("openedDocumentUri");
             setContentView(startScreen.createWorkspace(animationMode,openedDocument));
         } else {
             setContentView(startScreen.create());
@@ -45,7 +47,7 @@ public class MainActivity extends Activity {
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (SecurityException ignored) {}
-            showWorkspace(animation,displayName(uri));
+            showWorkspace(animation,displayName(uri),uri.toString());
         }
     }
 
@@ -53,14 +55,20 @@ public class MainActivity extends Activity {
         workspaceOpen=false;
         animationMode=false;
         openedDocument=null;
+        openedDocumentUri=null;
         infoPage=null;
         setContentView(startScreen.create());
     }
 
     public void showWorkspace(boolean animation, String document) {
+        showWorkspace(animation,document,null);
+    }
+
+    public void showWorkspace(boolean animation, String document, String documentUri) {
         workspaceOpen=true;
         animationMode=animation;
         openedDocument=document;
+        openedDocumentUri=documentUri;
         infoPage=null;
         setContentView(startScreen.createWorkspace(animationMode,openedDocument));
     }
@@ -68,6 +76,7 @@ public class MainActivity extends Activity {
     public void showInfo(String page) {
         workspaceOpen=false;
         openedDocument=null;
+        openedDocumentUri=null;
         infoPage=page;
         setContentView(startScreen.createInfoPage(page));
     }
@@ -86,6 +95,7 @@ public class MainActivity extends Activity {
         outState.putBoolean("workspaceOpen",workspaceOpen);
         outState.putBoolean("animationMode",animationMode);
         outState.putString("openedDocument",openedDocument);
+        outState.putString("openedDocumentUri",openedDocumentUri);
         outState.putString("infoPage",infoPage);
         super.onSaveInstanceState(outState);
     }
