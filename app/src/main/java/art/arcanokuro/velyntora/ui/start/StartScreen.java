@@ -99,6 +99,14 @@ public final class StartScreen {
         // del contenido para poder posicionarla a izquierda/derecha sin mover los botones.
         FrameLayout artLayer=new FrameLayout(a);
         artLayer.setClipToPadding(false);
+        ImageView artwork=new ImageView(a);
+        int artId=a.getResources().getIdentifier(animation?"start_animation":"start_drawing","drawable",a.getPackageName());
+        if(artId!=0){
+            artwork.setImageResource(artId);
+            artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            artwork.setAlpha(.88f);
+            artLayer.addView(artwork,new FrameLayout.LayoutParams(-1,-1));
+        }
         card.addView(artLayer,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout content=col(); content.setGravity(Gravity.CENTER);
