@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.content.Intent;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
@@ -86,8 +87,17 @@ public final class StartScreen {
         create.setOnClickListener(v -> openWorkspace(animation));
         content.addView(create,new LinearLayout.LayoutParams(-1,dp(50)));
         Space sp2=new Space(a); content.addView(sp2,new LinearLayout.LayoutParams(1,dp(10)));
-        content.addView(outline(animation?"Abrir proyecto":"Abrir imagen"),new LinearLayout.LayoutParams(-1,dp(50)));
+        Button open=outline(animation?"Abrir proyecto":"Abrir imagen");
+        open.setOnClickListener(v -> openDocument(animation));
+        content.addView(open,new LinearLayout.LayoutParams(-1,dp(50)));
         card.addView(content,new FrameLayout.LayoutParams(-1,-1)); return card;
+    }
+
+    private void openDocument(boolean animation){
+        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(animation?"*/*":"image/*");
+        a.startActivityForResult(intent, animation?2002:2001);
     }
 
     private void openWorkspace(boolean animation){
