@@ -19,7 +19,15 @@ public final class StartScreen {
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
 
     public View create(){
-        LinearLayout root=col(); root.setBackgroundColor(bg); root.setPadding(dp(24),dp(12),dp(24),dp(12));
+        ScrollView scroll=new ScrollView(a);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(bg);
+
+        LinearLayout root=col();
+        root.setBackgroundColor(bg);
+        root.setPadding(dp(24),dp(12),dp(24),dp(12));
+        root.setMinimumHeight(a.getResources().getDisplayMetrics().heightPixels);
+
         root.addView(brand(),new LinearLayout.LayoutParams(-1,dp(78)));
         TextView q=txt("¿Qué quieres crear?",24,text,true); q.setGravity(Gravity.CENTER);
         root.addView(q,new LinearLayout.LayoutParams(-1,dp(50)));
@@ -28,7 +36,7 @@ public final class StartScreen {
         choices.addView(mode(false),new LinearLayout.LayoutParams(0,-1,1));
         Space gap=new Space(a); choices.addView(gap,new LinearLayout.LayoutParams(dp(18),1));
         choices.addView(mode(true),new LinearLayout.LayoutParams(0,-1,1));
-        root.addView(choices,new LinearLayout.LayoutParams(-1,0,1));
+        root.addView(choices,new LinearLayout.LayoutParams(-1,dp(350)));
 
         root.addView(recents(),new LinearLayout.LayoutParams(-1,dp(150)));
         LinearLayout footer=row(); footer.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
@@ -40,7 +48,9 @@ public final class StartScreen {
         help.setOnClickListener(v -> showInfo("help"));
         footer.addView(help);
         root.addView(footer,new LinearLayout.LayoutParams(-1,dp(60)));
-        return root;
+
+        scroll.addView(root,new ScrollView.LayoutParams(-1,-2));
+        return scroll;
     }
 
     public View createInfoPage(String pageId){
@@ -113,12 +123,9 @@ public final class StartScreen {
             // Las dos ilustraciones usan exactamente la misma geometría.
             // Dibujo queda anclada al exterior izquierdo y Animación al exterior derecho,
             // produciendo la composición espejo sin desplazamientos manuales.
-            int artWidth=Math.round(a.getResources().getDisplayMetrics().widthPixels*0.36f);
-            artWidth=Math.max(dp(220),Math.min(dp(420),artWidth));
-            FrameLayout.LayoutParams artParams=new FrameLayout.LayoutParams(artWidth,-1);
-            artParams.gravity=animation
-                    ? Gravity.RIGHT|Gravity.CENTER_VERTICAL
-                    : Gravity.LEFT|Gravity.CENTER_VERTICAL;
+            // La ilustración cubre toda la tarjeta. El contenido se superpone encima,
+            // evitando la franja sólida que aparecía junto a cada personaje.
+            FrameLayout.LayoutParams artParams=new FrameLayout.LayoutParams(-1,-1);
             artLayer.addView(artwork,artParams);
         }
         card.addView(artLayer,new FrameLayout.LayoutParams(-1,-1));
