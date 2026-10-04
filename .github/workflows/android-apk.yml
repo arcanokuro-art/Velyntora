@@ -24,12 +24,16 @@ jobs:
         run: |
           DRAWING=app/src/main/res/drawable-nodpi/start_drawing.webp
           ANIMATION=app/src/main/res/drawable-nodpi/start_animation.webp
-          if [ -f "$DRAWING" ] && [ -f "$ANIMATION" ]; then
+          if [ -s "$DRAWING" ] && [ -s "$ANIMATION" ]; then
+            DRAWING_SIZE=$(stat -c%s "$DRAWING")
+            ANIMATION_SIZE=$(stat -c%s "$ANIMATION")
             echo "VELYNTORA_START_ART=complete" >> "$GITHUB_ENV"
             echo "✓ Ilustraciones Dibujo y Animación incluidas."
+            echo "  Dibujo: $DRAWING_SIZE bytes"
+            echo "  Animación: $ANIMATION_SIZE bytes"
           else
             echo "VELYNTORA_START_ART=pending" >> "$GITHUB_ENV"
-            echo "::notice::Las ilustraciones de inicio aún no están incluidas en el APK."
+            echo "::notice::Las ilustraciones de inicio aún no están incluidas o están vacías."
           fi
       - name: Compilar APK
         run: gradle :app:assembleDebug --stacktrace
