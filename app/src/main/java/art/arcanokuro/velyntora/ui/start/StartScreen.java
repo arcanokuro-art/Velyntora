@@ -7,9 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.BitmapDrawable;
-import java.io.IOException;
-import java.io.InputStream;
 import android.content.Intent;
 import android.view.Gravity;
 import android.view.View;
@@ -116,7 +113,9 @@ public final class StartScreen {
         artLayer.setClipToPadding(false);
         ImageView artwork=new ImageView(a);
         {
-            artwork.setImageDrawable(loadStartArtwork(animation));
+            artwork.setImageResource(animation
+                    ? art.arcanokuro.velyntora.R.drawable.start_animation
+                    : art.arcanokuro.velyntora.R.drawable.start_drawing);
             artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
             artwork.setAlpha(1f);
 
@@ -145,17 +144,6 @@ public final class StartScreen {
         open.setOnClickListener(v -> openDocument(animation));
         content.addView(open,new LinearLayout.LayoutParams(-1,dp(50)));
         card.addView(content,new FrameLayout.LayoutParams(-1,-1)); return card;
-    }
-
-    private BitmapDrawable loadStartArtwork(boolean animation){
-        String file=animation?"start_animation_HQ.webp":"start_drawing_HQ.webp";
-        try(InputStream in=a.getAssets().open(file)){
-            Bitmap bitmap=BitmapFactory.decodeStream(in);
-            if(bitmap==null) throw new IOException("No se pudo decodificar "+file);
-            return new BitmapDrawable(a.getResources(),bitmap);
-        }catch(IOException e){
-            throw new IllegalStateException("Falta el arte HQ de inicio: "+file,e);
-        }
     }
 
     private void openDocument(boolean animation){
