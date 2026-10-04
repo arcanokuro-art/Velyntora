@@ -22,8 +22,8 @@ jobs:
           gradle-version: '8.9'
       - name: Verificar ilustraciones de inicio
         run: |
-          DRAWING=app/src/main/res/drawable-nodpi/start_drawing.webp
-          ANIMATION=app/src/main/res/drawable-nodpi/start_animation.webp
+          DRAWING=app/src/main/res/drawable-nodpi/start_drawing_HQ.webp
+          ANIMATION=app/src/main/res/drawable-nodpi/start_animation_HQ.webp
           if [ ! -s "$DRAWING" ] || [ ! -s "$ANIMATION" ]; then
             echo "::error::Faltan las ilustraciones de inicio de Velyntora."
             exit 1
