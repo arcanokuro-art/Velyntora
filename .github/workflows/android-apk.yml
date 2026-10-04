@@ -24,17 +24,25 @@ jobs:
         run: |
           DRAWING=app/src/main/res/drawable-nodpi/start_drawing.webp
           ANIMATION=app/src/main/res/drawable-nodpi/start_animation.webp
-          if [ -s "$DRAWING" ] && [ -s "$ANIMATION" ]; then
-            DRAWING_SIZE=$(stat -c%s "$DRAWING")
-            ANIMATION_SIZE=$(stat -c%s "$ANIMATION")
-            echo "VELYNTORA_START_ART=complete" >> "$GITHUB_ENV"
-            echo "✓ Ilustraciones Dibujo y Animación incluidas."
-            echo "  Dibujo: $DRAWING_SIZE bytes"
-            echo "  Animación: $ANIMATION_SIZE bytes"
-          else
-            echo "VELYNTORA_START_ART=pending" >> "$GITHUB_ENV"
-            echo "::notice::Las ilustraciones de inicio aún no están incluidas o están vacías."
+          if [ ! -s "$DRAWING" ] || [ ! -s "$ANIMATION" ]; then
+            echo "::error::Faltan las ilustraciones de inicio de Velyntora."
+            exit 1
           fi
+
+          DRAWING_SIZE=$(stat -c%s "$DRAWING")
+          ANIMATION_SIZE=$(stat -c%s "$ANIMATION")
+          MIN_ART_BYTES=60000
+
+          echo "Dibujo: $DRAWING_SIZE bytes"
+          echo "Animación: $ANIMATION_SIZE bytes"
+
+          if [ "$DRAWING_SIZE" -lt "$MIN_ART_BYTES" ] || [ "$ANIMATION_SIZE" -lt "$MIN_ART_BYTES" ]; then
+            echo "::error::Las ilustraciones de inicio están demasiado comprimidas. Mínimo: $MIN_ART_BYTES bytes por recurso."
+            exit 1
+          fi
+
+          echo "VELYNTORA_START_ART=high_quality" >> "$GITHUB_ENV"
+          echo "✓ Ilustraciones de inicio presentes y protegidas contra compresión extrema."
       - name: Compilar APK
         run: gradle :app:assembleDebug --stacktrace
       - name: Preparar APK
