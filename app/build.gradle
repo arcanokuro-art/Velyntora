@@ -9,7 +9,7 @@ android {
             res {
                 excludes += ['drawable-nodpi/start_animation_HQ.webp', 'drawable-nodpi/start_drawing_HQ.webp']
             }
-            assets.srcDir 'src/main/res/drawable-nodpi'
+            assets.srcDir 'build/generated/velyntora-start-assets'
         }
     }
     namespace 'art.arcanokuro.velyntora'
