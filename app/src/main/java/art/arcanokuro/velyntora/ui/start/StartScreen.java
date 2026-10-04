@@ -82,10 +82,32 @@ public final class StartScreen {
         TextView desc=txt(animation?"Crea animaciones 2D, fotogramas\ny secuencias con todas las herramientas.":"Crea ilustraciones, edita imágenes\ny da vida a tus ideas.",15,Color.rgb(210,216,228),false);
         desc.setGravity(Gravity.CENTER); content.addView(desc);
         Space sp=new Space(a); content.addView(sp,new LinearLayout.LayoutParams(1,dp(15)));
-        content.addView(primary(animation? "Crear animación":"Crear ilustración",animation),new LinearLayout.LayoutParams(-1,dp(50)));
+        Button create=primary(animation? "Crear animación":"Crear ilustración",animation);
+        create.setOnClickListener(v -> openWorkspace(animation));
+        content.addView(create,new LinearLayout.LayoutParams(-1,dp(50)));
         Space sp2=new Space(a); content.addView(sp2,new LinearLayout.LayoutParams(1,dp(10)));
         content.addView(outline(animation?"Abrir proyecto":"Abrir imagen"),new LinearLayout.LayoutParams(-1,dp(50)));
         card.addView(content,new FrameLayout.LayoutParams(-1,-1)); return card;
+    }
+
+    private void openWorkspace(boolean animation){
+        LinearLayout workspace=col();
+        workspace.setBackgroundColor(bg);
+        workspace.setGravity(Gravity.CENTER);
+        TextView title=txt(animation?"Entorno de Animación":"Entorno de Dibujo",28,text,true);
+        title.setGravity(Gravity.CENTER);
+        workspace.addView(title,new LinearLayout.LayoutParams(-1,dp(64)));
+        TextView status=txt(animation
+                ?"Preparado para integrar el núcleo de animación de Velyntora."
+                :"Preparado para integrar el núcleo de dibujo de Velyntora.",15,muted,false);
+        status.setGravity(Gravity.CENTER);
+        workspace.addView(status,new LinearLayout.LayoutParams(-1,dp(48)));
+        Button back=outline("Volver al inicio");
+        back.setOnClickListener(v -> a.setContentView(create()));
+        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(220),dp(52));
+        bp.gravity=Gravity.CENTER_HORIZONTAL;
+        workspace.addView(back,bp);
+        a.setContentView(workspace);
     }
 
     private View recents(){
