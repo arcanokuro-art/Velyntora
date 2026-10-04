@@ -105,7 +105,7 @@ public class MainActivity extends Activity {
         super.onSaveInstanceState(outState);
     }
 
-    @Override protected void onWindowFocusChanged(boolean hasFocus) {
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if(hasFocus) enableKritaStyleFullscreen();
     }
