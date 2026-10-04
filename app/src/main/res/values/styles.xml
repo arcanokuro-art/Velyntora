@@ -2,8 +2,13 @@
     <style name="Theme.Velyntora" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#9E9E9E</item>
-        <item name="android:navigationBarColor">#252525</item>
-        <item name="android:statusBarColor">#252525</item>
+
+        <!-- El fondo de la ventana coincide con la pantalla inicial para evitar
+             destellos grises mientras Android crea MainActivity. -->
+        <item name="android:windowBackground">#0D1420</item>
+        <item name="android:navigationBarColor">#0D1420</item>
+        <item name="android:statusBarColor">#0D1420</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>
