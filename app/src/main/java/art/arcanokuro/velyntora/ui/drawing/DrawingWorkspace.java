@@ -36,7 +36,8 @@ public final class DrawingWorkspace {
         LinearLayout root=col();
         root.setBackgroundColor(Color.rgb(31,31,31));
 
-        root.addView(topBar.createMenu(onBack,canvas::undo,canvas::redo,documentName),new LinearLayout.LayoutParams(-1,dp(42)));
+        Runnable export=()->{if(a instanceof art.arcanokuro.velyntora.MainActivity)((art.arcanokuro.velyntora.MainActivity)a).exportDrawing(canvas,documentName);};
+        root.addView(topBar.createMenu(onBack,canvas::undo,canvas::redo,export,documentName),new LinearLayout.LayoutParams(-1,dp(42)));
         root.addView(topBar.createToolOptions(),new LinearLayout.LayoutParams(-1,dp(46)));
 
         LinearLayout body=row();
