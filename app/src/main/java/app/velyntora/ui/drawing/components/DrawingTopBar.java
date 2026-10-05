@@ -1,6 +1,6 @@
 package app.velyntora.ui.drawing.components;
 
-import android.app.Activity;import android.graphics.Color;import android.graphics.drawable.GradientDrawable;import android.view.Gravity;import android.view.View;import android.widget.*;
+import android.app.Activity;import android.app.AlertDialog;import android.graphics.Color;import android.graphics.drawable.GradientDrawable;import android.view.Gravity;import android.view.View;import android.widget.*;
 import app.velyntora.ui.drawing.DrawingState;
 
 public final class DrawingTopBar {
