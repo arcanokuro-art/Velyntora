@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
         int background = Color.rgb(13,20,32);
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
-        enableKritaStyleFullscreen();
+        enableVelyntoraFullscreen();
         startScreen = new StartScreen(this);
         if(state!=null && state.getString("infoPage")!=null) {
             infoPage=state.getString("infoPage");
@@ -107,10 +107,10 @@ public class MainActivity extends Activity {
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if(hasFocus) enableKritaStyleFullscreen();
+        if(hasFocus) enableVelyntoraFullscreen();
     }
 
-    private void enableKritaStyleFullscreen() {
+    private void enableVelyntoraFullscreen() {
         final View decor=getWindow().getDecorView();
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             final WindowInsetsController controller=getWindow().getInsetsController();
