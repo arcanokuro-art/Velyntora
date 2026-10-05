@@ -99,6 +99,9 @@ public final class DrawingCanvas implements DrawingState.Listener {
             configurePaint();
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
+                    if("Relleno".equals(state.tool())){
+                        saveUndoSnapshot();redoStack.clear();floodFill(Math.round(x),Math.round(y),state.color());invalidate();return true;
+                    }
                     if("Línea/Curva".equals(state.tool())&&curvePending){
                         saveUndoSnapshot();redoStack.clear();curving=true;controlX=x;controlY=y;invalidate();return true;
                     }
@@ -155,7 +158,19 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         private boolean supportsDrawingTool(){
-            return "Pincel".equals(state.tool())||"Borrador".equals(state.tool())||"Línea/Curva".equals(state.tool())||isShapeTool();
+            return "Pincel".equals(state.tool())||"Borrador".equals(state.tool())||"Línea/Curva".equals(state.tool())||"Relleno".equals(state.tool())||isShapeTool();
+        }
+
+        private void floodFill(int sx,int sy,int replacement){
+            if(bitmap==null||sx<0||sy<0||sx>=bitmap.getWidth()||sy>=bitmap.getHeight())return;
+            int target=bitmap.getPixel(sx,sy);if(target==replacement)return;
+            int w=bitmap.getWidth(),h=bitmap.getHeight();
+            ArrayDeque<Integer> q=new ArrayDeque<>();q.add(sy*w+sx);
+            while(!q.isEmpty()){
+                int p=q.removeFirst(),x=p%w,y=p/w;if(bitmap.getPixel(x,y)!=target)continue;
+                bitmap.setPixel(x,y,replacement);
+                if(x>0)q.add(p-1);if(x+1<w)q.add(p+1);if(y>0)q.add(p-w);if(y+1<h)q.add(p+w);
+            }
         }
 
         private boolean isShapeTool(){return "Rectángulo".equals(state.tool())||"Elipse".equals(state.tool());}
