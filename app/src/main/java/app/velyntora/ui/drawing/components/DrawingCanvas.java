@@ -188,7 +188,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     if(bitmapCanvas!=null){
                         if(curving){
                             controlX=x;controlY=y;
-                            if(curveBase!=null){bitmap=curveBase.copy(Bitmap.Config.ARGB_8888,true);bitmapCanvas=new Canvas(bitmap);}
+                            if(curveBase!=null){bitmap=curveBase.copy(Bitmap.Config.ARGB_8888,true);bitmapCanvas=new Canvas(bitmap);if(layers!=null)layers.active().setBitmap(bitmap);}
                             Path curve=new Path();curve.moveTo(lineStartX,lineStartY);curve.quadTo(controlX,controlY,lineEndX,lineEndY);bitmapCanvas.drawPath(curve,paint);
                             curving=false;curvePending=false;curveBase=null;lineStartX=-1f;
                         }else if(isShapeTool()){
