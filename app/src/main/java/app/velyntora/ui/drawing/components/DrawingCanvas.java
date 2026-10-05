@@ -267,7 +267,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     }else if(transformBase!=null){bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);}
                     invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){if(transformBase!=null)transformBase.recycle();transformBase=null;if(selectionBase!=null)selectionBase.recycle();selectionBase=null;if(selectionPixels!=null)selectionPixels.recycle();selectionPixels=null;selectionOrigin=null;}return true;
-                case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
+                case MotionEvent.ACTION_CANCEL:if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;return true;default:return false;
             }
         }
 
@@ -280,7 +280,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));Bitmap scaled=Bitmap.createScaledBitmap(transformBase,nw,nh,true);
                     bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(scaled,(getWidth()-nw)/2f,(getHeight()-nh)/2f,null);scaled.recycle();invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
-                case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
+                case MotionEvent.ACTION_CANCEL:if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;return true;default:return false;
             }
         }
 
