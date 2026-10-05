@@ -19,6 +19,8 @@ import art.arcanokuro.velyntora.ui.drawing.DrawingState;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class DrawingCanvas implements DrawingState.Listener {
     private final Activity a;
@@ -69,6 +71,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean curvePending=false,curving=false;
         private Bitmap curveBase;
         private Bitmap transformBase;
+        private RectF selectionRect;
+        private final List<float[]> polygonPoints=new ArrayList<>();
         private float transformStartX,transformStartY;
         private final Deque<Bitmap> undoStack=new ArrayDeque<>();
         private final Deque<Bitmap> redoStack=new ArrayDeque<>();
@@ -119,11 +123,15 @@ public final class DrawingCanvas implements DrawingState.Listener {
             }else if(isShapeTool()&&startX>=0){
                 configurePaint();drawShape(canvas,startX,startY,currentX,currentY);
             }
+            if(selectionRect!=null){Paint sel=new Paint(Paint.ANTI_ALIAS_FLAG);sel.setStyle(Paint.Style.STROKE);sel.setStrokeWidth(dp(1));sel.setColor(Color.rgb(40,140,255));sel.setPathEffect(new android.graphics.DashPathEffect(new float[]{dp(6),dp(4)},0));canvas.drawRect(selectionRect,sel);}
+            if(!polygonPoints.isEmpty()){configurePaint();Path poly=new Path();float[] first=polygonPoints.get(0);poly.moveTo(first[0],first[1]);for(int i=1;i<polygonPoints.size();i++){float[] p=polygonPoints.get(i);poly.lineTo(p[0],p[1]);}canvas.drawPath(poly,paint);}
         }
 
         @Override public boolean onTouchEvent(MotionEvent event){
             if("Mano".equals(state.tool()))return handlePan(event);
             if("Zoom".equals(state.tool()))return handleZoom(event);
+            if("Selección rectangular".equals(state.tool())||"Seleccionar".equals(state.tool()))return handleSelection(event);
+            if("Polígono".equals(state.tool()))return handlePolygon(event);
             if("Mover".equals(state.tool()))return handleMoveContent(event);
             if("Transformar".equals(state.tool()))return handleTransformContent(event);
             if(!supportsDrawingTool())return false;
@@ -183,6 +191,22 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handleZoom(MotionEvent e){
             if(e.getActionMasked()==MotionEvent.ACTION_DOWN){int next=state.zoom()>=400?100:Math.min(400,state.zoom()+25);state.setZoom(next);return true;}
             return e.getActionMasked()==MotionEvent.ACTION_UP;
+        }
+
+        private boolean handleSelection(MotionEvent e){
+            float x=e.getX(),y=e.getY();state.setPointer(Math.round(x),Math.round(y));
+            switch(e.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:startX=x;startY=y;selectionRect=new RectF(x,y,x,y);invalidate();return true;
+                case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:selectionRect.set(Math.min(startX,x),Math.min(startY,y),Math.max(startX,x),Math.max(startY,y));invalidate();if(e.getActionMasked()==MotionEvent.ACTION_UP){startX=startY=-1f;}return true;
+                case MotionEvent.ACTION_CANCEL:startX=startY=-1f;return true;default:return false;
+            }
+        }
+
+        private boolean handlePolygon(MotionEvent e){
+            if(e.getActionMasked()!=MotionEvent.ACTION_DOWN)return true;float x=e.getX(),y=e.getY();state.setPointer(Math.round(x),Math.round(y));
+            if(!polygonPoints.isEmpty()){float[] first=polygonPoints.get(0);float dx=x-first[0],dy=y-first[1];if(polygonPoints.size()>=3&&dx*dx+dy*dy<=dp(18)*dp(18)){
+                saveUndoSnapshot();redoStack.clear();configurePaint();Path poly=new Path();poly.moveTo(first[0],first[1]);for(int i=1;i<polygonPoints.size();i++){float[] p=polygonPoints.get(i);poly.lineTo(p[0],p[1]);}poly.close();bitmapCanvas.drawPath(poly,paint);polygonPoints.clear();invalidate();return true;}}
+            polygonPoints.add(new float[]{x,y});invalidate();return true;
         }
 
         private boolean handleMoveContent(MotionEvent e){
