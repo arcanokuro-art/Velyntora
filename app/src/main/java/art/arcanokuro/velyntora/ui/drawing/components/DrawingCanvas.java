@@ -51,7 +51,10 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private Canvas bitmapCanvas;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path=new Path();
-        private float lastX,lastY,startX,startY,currentX,currentY;
+        private float lastX,lastY,startX=-1f,startY=-1f,currentX,currentY;
+        private float lineStartX=-1f,lineStartY=-1f,lineEndX=-1f,lineEndY=-1f,controlX,controlY;
+        private boolean curvePending=false,curving=false;
+        private Bitmap curveBase;
         private final Deque<Bitmap> undoStack=new ArrayDeque<>();
         private final Deque<Bitmap> redoStack=new ArrayDeque<>();
 
@@ -78,9 +81,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
             super.onDraw(canvas);
             if(bitmap!=null)canvas.drawBitmap(bitmap,0,0,null);
             canvas.drawPath(path,paint);
-            if("Línea/Curva".equals(state.tool())&&startX>=0){
+            if("Línea/Curva".equals(state.tool())){
                 configurePaint();
-                canvas.drawLine(startX,startY,currentX,currentY,paint);
+                if(curving){
+                    Path preview=new Path();preview.moveTo(lineStartX,lineStartY);preview.quadTo(controlX,controlY,lineEndX,lineEndY);canvas.drawPath(preview,paint);
+                }else if(startX>=0) canvas.drawLine(startX,startY,currentX,currentY,paint);
             }
         }
 
@@ -90,12 +95,15 @@ public final class DrawingCanvas implements DrawingState.Listener {
             configurePaint();
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
-                    saveUndoSnapshot();
-                    redoStack.clear();
+                    if("Línea/Curva".equals(state.tool())&&curvePending){
+                        saveUndoSnapshot();redoStack.clear();curving=true;controlX=x;controlY=y;invalidate();return true;
+                    }
+                    saveUndoSnapshot();redoStack.clear();
                     startX=currentX=x;startY=currentY=y;
                     path.reset();path.moveTo(x,y);lastX=x;lastY=y;invalidate();return true;
                 case MotionEvent.ACTION_MOVE:
                     currentX=x;currentY=y;
+                    if(curving){controlX=x;controlY=y;invalidate();return true;}
                     if(!"Línea/Curva".equals(state.tool())){
                         float midX=(x+lastX)/2f,midY=(y+lastY)/2f;
                         path.quadTo(lastX,lastY,midX,midY);lastX=x;lastY=y;
@@ -105,8 +113,16 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_CANCEL:
                     currentX=x;currentY=y;
                     if(bitmapCanvas!=null){
-                        if("Línea/Curva".equals(state.tool())) bitmapCanvas.drawLine(startX,startY,currentX,currentY,paint);
-                        else {path.lineTo(x,y);bitmapCanvas.drawPath(path,paint);}
+                        if(curving){
+                            controlX=x;controlY=y;
+                            if(curveBase!=null){bitmap=curveBase.copy(Bitmap.Config.ARGB_8888,true);bitmapCanvas=new Canvas(bitmap);}
+                            Path curve=new Path();curve.moveTo(lineStartX,lineStartY);curve.quadTo(controlX,controlY,lineEndX,lineEndY);bitmapCanvas.drawPath(curve,paint);
+                            curving=false;curvePending=false;curveBase=null;lineStartX=-1f;
+                        }else if("Línea/Curva".equals(state.tool())){
+                            lineStartX=startX;lineStartY=startY;lineEndX=currentX;lineEndY=currentY;
+                            curveBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);
+                            bitmapCanvas.drawLine(lineStartX,lineStartY,lineEndX,lineEndY,paint);curvePending=true;
+                        }else {path.lineTo(x,y);bitmapCanvas.drawPath(path,paint);curvePending=false;curveBase=null;}
                     }
                     startX=startY=-1f;path.reset();invalidate();return true;
                 default:return false;
