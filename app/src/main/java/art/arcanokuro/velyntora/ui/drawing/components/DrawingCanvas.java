@@ -51,7 +51,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private Canvas bitmapCanvas;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path=new Path();
-        private float lastX,lastY;
+        private float lastX,lastY,startX,startY,currentX,currentY;
         private final Deque<Bitmap> undoStack=new ArrayDeque<>();
         private final Deque<Bitmap> redoStack=new ArrayDeque<>();
 
@@ -78,25 +78,37 @@ public final class DrawingCanvas implements DrawingState.Listener {
             super.onDraw(canvas);
             if(bitmap!=null)canvas.drawBitmap(bitmap,0,0,null);
             canvas.drawPath(path,paint);
+            if("Línea/Curva".equals(state.tool())&&startX>=0){
+                configurePaint();
+                canvas.drawLine(startX,startY,currentX,currentY,paint);
+            }
         }
 
         @Override public boolean onTouchEvent(MotionEvent event){
-            if(!supportsFreehand())return false;
+            if(!supportsDrawingTool())return false;
             float x=event.getX(),y=event.getY();
             configurePaint();
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
                     saveUndoSnapshot();
                     redoStack.clear();
+                    startX=currentX=x;startY=currentY=y;
                     path.reset();path.moveTo(x,y);lastX=x;lastY=y;invalidate();return true;
                 case MotionEvent.ACTION_MOVE:
-                    float midX=(x+lastX)/2f,midY=(y+lastY)/2f;
-                    path.quadTo(lastX,lastY,midX,midY);lastX=x;lastY=y;invalidate();return true;
+                    currentX=x;currentY=y;
+                    if(!"Línea/Curva".equals(state.tool())){
+                        float midX=(x+lastX)/2f,midY=(y+lastY)/2f;
+                        path.quadTo(lastX,lastY,midX,midY);lastX=x;lastY=y;
+                    }
+                    invalidate();return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    path.lineTo(x,y);
-                    if(bitmapCanvas!=null)bitmapCanvas.drawPath(path,paint);
-                    path.reset();invalidate();return true;
+                    currentX=x;currentY=y;
+                    if(bitmapCanvas!=null){
+                        if("Línea/Curva".equals(state.tool())) bitmapCanvas.drawLine(startX,startY,currentX,currentY,paint);
+                        else {path.lineTo(x,y);bitmapCanvas.drawPath(path,paint);}
+                    }
+                    startX=startY=-1f;path.reset();invalidate();return true;
                 default:return false;
             }
         }
@@ -119,8 +131,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
             while(undoStack.size()>30)undoStack.removeLast();
         }
 
-        private boolean supportsFreehand(){
-            return "Pincel".equals(state.tool())||"Borrador".equals(state.tool());
+        private boolean supportsDrawingTool(){
+            return "Pincel".equals(state.tool())||"Borrador".equals(state.tool())||"Línea/Curva".equals(state.tool());
         }
 
         private void configurePaint(){
