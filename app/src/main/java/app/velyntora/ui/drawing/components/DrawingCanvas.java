@@ -109,7 +109,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(bitmap!=null)nextCanvas.drawBitmap(bitmap,0,0,null);
             bitmap=next;
             bitmapCanvas=nextCanvas;
-            if(layers==null){layers=new DrawingLayers(w,h);layers.active().setBitmap(bitmap);}
+            if(layers==null){layers=new DrawingLayers(w,h);}
+            layers.active().setBitmap(bitmap);
             if(!sourceLoaded&&sourceUri!=null){loadSourceImage(w,h);sourceLoaded=true;layers.active().setBitmap(bitmap);}
         }
 
