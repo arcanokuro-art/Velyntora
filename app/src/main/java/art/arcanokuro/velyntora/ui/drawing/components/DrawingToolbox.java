@@ -11,8 +11,8 @@ import art.arcanokuro.velyntora.ui.drawing.DrawingState;
 public final class DrawingToolbox {
     private final Activity a; private final DrawingState state; private final int text=Color.rgb(235,235,235);
     private TextView selected;
-    private final String[][] icons={{"↖","✥","▭"},{"✎","⌫","T"},{"／⌁","▱","○"},{"▧","◈","⌕"},{"☝","▣","⌁"}};
-    private final String[][] names={{"Seleccionar","Mover","Rectángulo"},{"Pincel","Borrador","Texto"},{"Línea/Curva","Polígono","Elipse"},{"Selección rectangular","Transformar","Zoom"},{"Mano","Relleno","Curva"}};
+    private final String[][] icons={{"↖","✥","▭"},{"✎","⌫","T"},{"／⌁","▱","○"},{"▧","◈","⌕"},{"☝","▣"}};
+    private final String[][] names={{"Seleccionar","Mover","Rectángulo"},{"Pincel","Borrador","Texto"},{"Línea/Curva","Polígono","Elipse"},{"Selección rectangular","Transformar","Zoom"},{"Mano","Relleno"}};
     public DrawingToolbox(Activity activity,DrawingState drawingState){a=activity;state=drawingState;}
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
 
