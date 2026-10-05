@@ -31,7 +31,7 @@ public final class DrawingWorkspace {
 
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
 
-    public View create(String source,Runnable onBack){
+    public View create(String source,String sourceUri,Runnable onBack){
         String documentName=source==null?"[No guardado]":source;
         LinearLayout root=col();
         root.setBackgroundColor(Color.rgb(31,31,31));
@@ -41,7 +41,7 @@ public final class DrawingWorkspace {
 
         LinearLayout body=row();
         body.addView(toolbox.create(),new LinearLayout.LayoutParams(dp(150),-1));
-        body.addView(canvas.create(documentName),new LinearLayout.LayoutParams(0,-1,1));
+        body.addView(canvas.create(documentName,sourceUri),new LinearLayout.LayoutParams(0,-1,1));
         root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
 
         root.addView(statusBar.create(),new LinearLayout.LayoutParams(-1,dp(52)));
