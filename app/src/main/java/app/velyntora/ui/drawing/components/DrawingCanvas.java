@@ -126,7 +126,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);
-            if(bitmap!=null){Bitmap shown=composite();canvas.drawBitmap(shown,0,0,null);if(shown!=bitmap)shown.recycle();}
+            if(bitmap!=null){if(layers==null)canvas.drawBitmap(bitmap,0,0,null);else for(DrawingLayers.Layer layer:layers.all())if(layer.visible()&&layer.bitmap()!=null)canvas.drawBitmap(layer.bitmap(),0,0,null);}
             canvas.drawPath(path,paint);
             if("Línea/Curva".equals(state.tool())){
                 configurePaint();
