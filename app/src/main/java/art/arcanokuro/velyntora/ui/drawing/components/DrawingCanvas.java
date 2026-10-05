@@ -11,6 +11,7 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.net.Uri;
 import java.io.InputStream;
+import java.io.OutputStream;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -42,6 +43,13 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
     public void undo(){if(surface!=null)surface.undo();}
     public void redo(){if(surface!=null)surface.redo();}
+
+    public boolean exportPng(Uri destination){
+        if(surface==null||surface.bitmap==null||destination==null)return false;
+        try(OutputStream out=a.getContentResolver().openOutputStream(destination)){
+            return out!=null&&surface.bitmap.compress(Bitmap.CompressFormat.PNG,100,out);
+        }catch(Exception ignored){return false;}
+    }
 
     private void updateZoom(){
         if(surface==null)return;
