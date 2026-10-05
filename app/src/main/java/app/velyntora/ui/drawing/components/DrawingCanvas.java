@@ -153,6 +153,10 @@ public final class DrawingCanvas implements DrawingState.Listener {
         @Override public boolean onTouchEvent(MotionEvent event){
             if("Mano".equals(state.tool()))return handlePan(event);
             if("Zoom".equals(state.tool()))return handleZoom(event);
+            if(layers!=null&&!layers.active().visible()){
+                if("Selección rectangular".equals(state.tool())||"Seleccionar".equals(state.tool()))return handleSelection(event);
+                return true;
+            }
             if("Texto".equals(state.tool()))return handleText(event);
             if("Selección rectangular".equals(state.tool())||"Seleccionar".equals(state.tool()))return handleSelection(event);
             if("Polígono".equals(state.tool()))return handlePolygon(event);
