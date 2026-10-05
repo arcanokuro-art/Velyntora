@@ -68,6 +68,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private float lineStartX=-1f,lineStartY=-1f,lineEndX=-1f,lineEndY=-1f,controlX,controlY;
         private boolean curvePending=false,curving=false;
         private Bitmap curveBase;
+        private Bitmap transformBase;
+        private float transformStartX,transformStartY;
         private final Deque<Bitmap> undoStack=new ArrayDeque<>();
         private final Deque<Bitmap> redoStack=new ArrayDeque<>();
 
@@ -122,6 +124,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
         @Override public boolean onTouchEvent(MotionEvent event){
             if("Mano".equals(state.tool()))return handlePan(event);
             if("Zoom".equals(state.tool()))return handleZoom(event);
+            if("Mover".equals(state.tool()))return handleMoveContent(event);
+            if("Transformar".equals(state.tool()))return handleTransformContent(event);
             if(!supportsDrawingTool())return false;
             float x=event.getX(),y=event.getY();
             state.setPointer(Math.round(x),Math.round(y));
@@ -179,6 +183,31 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handleZoom(MotionEvent e){
             if(e.getActionMasked()==MotionEvent.ACTION_DOWN){int next=state.zoom()>=400?100:Math.min(400,state.zoom()+25);state.setZoom(next);return true;}
             return e.getActionMasked()==MotionEvent.ACTION_UP;
+        }
+
+        private boolean handleMoveContent(MotionEvent e){
+            if(bitmap==null)return false;
+            switch(e.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();redoStack.clear();transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();transformStartY=e.getY();return true;
+                case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
+                    if(transformBase==null)return true;float dx=e.getX()-transformStartX,dy=e.getY()-transformStartY;
+                    bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);invalidate();
+                    if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
+                case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
+            }
+        }
+
+        private boolean handleTransformContent(MotionEvent e){
+            if(bitmap==null)return false;
+            switch(e.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();redoStack.clear();transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();return true;
+                case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
+                    if(transformBase==null)return true;float factor=Math.max(0.1f,Math.min(3f,1f+(e.getX()-transformStartX)/Math.max(1f,getWidth())));
+                    int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));Bitmap scaled=Bitmap.createScaledBitmap(transformBase,nw,nh,true);
+                    bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(scaled,(getWidth()-nw)/2f,(getHeight()-nh)/2f,null);scaled.recycle();invalidate();
+                    if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
+                case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
+            }
         }
 
         void undo(){
