@@ -36,7 +36,7 @@ public class MainActivity extends Activity {
             animationMode=state.getBoolean("animationMode",false);
             openedDocument=state.getString("openedDocument");
             openedDocumentUri=state.getString("openedDocumentUri");
-            setContentView(startScreen.createWorkspace(animationMode,openedDocument));
+            setContentView(startScreen.createWorkspace(animationMode,openedDocument,openedDocumentUri));
         } else {
             setContentView(startScreen.create());
         }
@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
         openedDocument=document;
         openedDocumentUri=documentUri;
         infoPage=null;
-        setContentView(startScreen.createWorkspace(animationMode,openedDocument));
+        setContentView(startScreen.createWorkspace(animationMode,openedDocument,openedDocumentUri));
     }
 
     public void showInfo(String page) {
