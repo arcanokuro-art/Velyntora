@@ -155,8 +155,10 @@ public final class StartScreen {
         a.startActivityForResult(intent, animation?2002:2001);
     }
 
-    public View createWorkspace(boolean animation, String source){
-        if (!animation) return new DrawingWorkspace(a).create(source, this::showHome);
+    public View createWorkspace(boolean animation, String source){return createWorkspace(animation,source,null);}
+
+    public View createWorkspace(boolean animation, String source, String sourceUri){
+        if (!animation) return new DrawingWorkspace(a).create(source,sourceUri,this::showHome);
         LinearLayout workspace=col();
         workspace.setBackgroundColor(bg);
         workspace.setGravity(Gravity.CENTER);
