@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -86,6 +87,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 if(curving){
                     Path preview=new Path();preview.moveTo(lineStartX,lineStartY);preview.quadTo(controlX,controlY,lineEndX,lineEndY);canvas.drawPath(preview,paint);
                 }else if(startX>=0) canvas.drawLine(startX,startY,currentX,currentY,paint);
+            }else if(isShapeTool()&&startX>=0){
+                configurePaint();drawShape(canvas,startX,startY,currentX,currentY);
             }
         }
 
@@ -105,6 +108,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_MOVE:
                     currentX=x;currentY=y;
                     if(curving){controlX=x;controlY=y;invalidate();return true;}
+                    if(isShapeTool()){invalidate();return true;}
                     if(!"Línea/Curva".equals(state.tool())){
                         float midX=(x+lastX)/2f,midY=(y+lastY)/2f;
                         path.quadTo(lastX,lastY,midX,midY);lastX=x;lastY=y;
@@ -119,6 +123,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
                             if(curveBase!=null){bitmap=curveBase.copy(Bitmap.Config.ARGB_8888,true);bitmapCanvas=new Canvas(bitmap);}
                             Path curve=new Path();curve.moveTo(lineStartX,lineStartY);curve.quadTo(controlX,controlY,lineEndX,lineEndY);bitmapCanvas.drawPath(curve,paint);
                             curving=false;curvePending=false;curveBase=null;lineStartX=-1f;
+                        }else if(isShapeTool()){
+                            drawShape(bitmapCanvas,startX,startY,currentX,currentY);curvePending=false;curveBase=null;
                         }else if("Línea/Curva".equals(state.tool())){
                             lineStartX=startX;lineStartY=startY;lineEndX=currentX;lineEndY=currentY;
                             curveBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);
@@ -149,7 +155,14 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         private boolean supportsDrawingTool(){
-            return "Pincel".equals(state.tool())||"Borrador".equals(state.tool())||"Línea/Curva".equals(state.tool());
+            return "Pincel".equals(state.tool())||"Borrador".equals(state.tool())||"Línea/Curva".equals(state.tool())||isShapeTool();
+        }
+
+        private boolean isShapeTool(){return "Rectángulo".equals(state.tool())||"Elipse".equals(state.tool());}
+
+        private void drawShape(Canvas target,float x1,float y1,float x2,float y2){
+            RectF bounds=new RectF(Math.min(x1,x2),Math.min(y1,y2),Math.max(x1,x2),Math.max(y1,y2));
+            if("Rectángulo".equals(state.tool()))target.drawRect(bounds,paint);else if("Elipse".equals(state.tool()))target.drawOval(bounds,paint);
         }
 
         private void configurePaint(){
