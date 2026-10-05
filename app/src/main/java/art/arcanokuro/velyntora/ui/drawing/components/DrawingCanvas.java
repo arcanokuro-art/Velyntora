@@ -25,6 +25,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
     private final DrawingState state;
     private FrameLayout area;
     private PaintSurface surface;
+    private float panX=0f,panY=0f,panStartX,panStartY,viewStartX,viewStartY;
 
     public DrawingCanvas(Activity activity,DrawingState drawingState){a=activity;state=drawingState;}
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
@@ -35,11 +36,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
         surface=new PaintSurface(sourceUri);
         FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(dp(620),dp(430),android.view.Gravity.CENTER);
         area.addView(surface,params);
-        updateZoom();
+        updateTransform();
         return area;
     }
 
-    @Override public void onDrawingStateChanged(DrawingState ignored){updateZoom();if(surface!=null)surface.invalidate();}
+    @Override public void onDrawingStateChanged(DrawingState ignored){updateTransform();if(surface!=null)surface.invalidate();}
 
     public void undo(){if(surface!=null)surface.undo();}
     public void redo(){if(surface!=null)surface.redo();}
@@ -51,11 +52,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }catch(Exception ignored){return false;}
     }
 
-    private void updateZoom(){
+    private void updateTransform(){
         if(surface==null)return;
         float scale=state.zoom()/100f;
-        surface.setScaleX(scale);
-        surface.setScaleY(scale);
+        surface.setScaleX(scale);surface.setScaleY(scale);
+        surface.setTranslationX(panX);surface.setTranslationY(panY);
     }
 
     private final class PaintSurface extends View {
@@ -119,6 +120,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         @Override public boolean onTouchEvent(MotionEvent event){
+            if("Mano".equals(state.tool()))return handlePan(event);
+            if("Zoom".equals(state.tool()))return handleZoom(event);
             if(!supportsDrawingTool())return false;
             float x=event.getX(),y=event.getY();
             state.setPointer(Math.round(x),Math.round(y));
@@ -163,6 +166,19 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     startX=startY=-1f;path.reset();invalidate();return true;
                 default:return false;
             }
+        }
+
+        private boolean handlePan(MotionEvent e){
+            switch(e.getActionMasked()){
+                case MotionEvent.ACTION_DOWN: panStartX=e.getRawX();panStartY=e.getRawY();viewStartX=panX;viewStartY=panY;return true;
+                case MotionEvent.ACTION_MOVE: panX=viewStartX+(e.getRawX()-panStartX);panY=viewStartY+(e.getRawY()-panStartY);updateTransform();return true;
+                case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:return true;default:return false;
+            }
+        }
+
+        private boolean handleZoom(MotionEvent e){
+            if(e.getActionMasked()==MotionEvent.ACTION_DOWN){int next=state.zoom()>=400?100:Math.min(400,state.zoom()+25);state.setZoom(next);return true;}
+            return e.getActionMasked()==MotionEvent.ACTION_UP;
         }
 
         void undo(){
