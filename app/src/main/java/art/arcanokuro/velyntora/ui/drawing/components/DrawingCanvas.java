@@ -12,6 +12,9 @@ import android.widget.FrameLayout;
 
 import art.arcanokuro.velyntora.ui.drawing.DrawingState;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 public final class DrawingCanvas implements DrawingState.Listener {
     private final Activity a;
     private final DrawingState state;
@@ -33,6 +36,9 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
     @Override public void onDrawingStateChanged(DrawingState ignored){updateZoom();if(surface!=null)surface.invalidate();}
 
+    public void undo(){if(surface!=null)surface.undo();}
+    public void redo(){if(surface!=null)surface.redo();}
+
     private void updateZoom(){
         if(surface==null)return;
         float scale=state.zoom()/100f;
@@ -46,6 +52,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path=new Path();
         private float lastX,lastY;
+        private final Deque<Bitmap> undoStack=new ArrayDeque<>();
+        private final Deque<Bitmap> redoStack=new ArrayDeque<>();
 
         PaintSurface(){
             super(a);
@@ -78,6 +86,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
             configurePaint();
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
+                    saveUndoSnapshot();
+                    redoStack.clear();
                     path.reset();path.moveTo(x,y);lastX=x;lastY=y;invalidate();return true;
                 case MotionEvent.ACTION_MOVE:
                     float midX=(x+lastX)/2f,midY=(y+lastY)/2f;
@@ -89,6 +99,24 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     path.reset();invalidate();return true;
                 default:return false;
             }
+        }
+
+        void undo(){
+            if(undoStack.isEmpty()||bitmap==null)return;
+            redoStack.push(bitmap.copy(Bitmap.Config.ARGB_8888,true));
+            bitmap=undoStack.pop();bitmapCanvas=new Canvas(bitmap);invalidate();
+        }
+
+        void redo(){
+            if(redoStack.isEmpty()||bitmap==null)return;
+            undoStack.push(bitmap.copy(Bitmap.Config.ARGB_8888,true));
+            bitmap=redoStack.pop();bitmapCanvas=new Canvas(bitmap);invalidate();
+        }
+
+        private void saveUndoSnapshot(){
+            if(bitmap==null)return;
+            undoStack.push(bitmap.copy(Bitmap.Config.ARGB_8888,true));
+            while(undoStack.size()>30)undoStack.removeLast();
         }
 
         private boolean supportsFreehand(){
