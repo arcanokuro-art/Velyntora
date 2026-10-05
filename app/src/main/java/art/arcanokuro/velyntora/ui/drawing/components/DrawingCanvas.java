@@ -92,6 +92,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         @Override public boolean onTouchEvent(MotionEvent event){
             if(!supportsDrawingTool())return false;
             float x=event.getX(),y=event.getY();
+            state.setPointer(Math.round(x),Math.round(y));
             configurePaint();
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
