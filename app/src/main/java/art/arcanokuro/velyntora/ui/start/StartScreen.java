@@ -2,6 +2,7 @@ package art.arcanokuro.velyntora.ui.start;
 
 import android.app.Activity;
 import art.arcanokuro.velyntora.MainActivity;
+import art.arcanokuro.velyntora.ui.drawing.DrawingWorkspace;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -155,6 +156,7 @@ public final class StartScreen {
     }
 
     public View createWorkspace(boolean animation, String source){
+        if (!animation) return new DrawingWorkspace(a).create(source, this::showHome);
         LinearLayout workspace=col();
         workspace.setBackgroundColor(bg);
         workspace.setGravity(Gravity.CENTER);
