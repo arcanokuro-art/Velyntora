@@ -2,12 +2,15 @@ package art.arcanokuro.velyntora.ui.drawing.components;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
+import android.net.Uri;
+import java.io.InputStream;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -25,10 +28,10 @@ public final class DrawingCanvas implements DrawingState.Listener {
     public DrawingCanvas(Activity activity,DrawingState drawingState){a=activity;state=drawingState;}
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
 
-    public View create(String documentName){
+    public View create(String documentName,String sourceUri){
         area=new FrameLayout(a);
         area.setBackgroundColor(Color.rgb(92,92,92));
-        surface=new PaintSurface();
+        surface=new PaintSurface(sourceUri);
         FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(dp(620),dp(430),android.view.Gravity.CENTER);
         area.addView(surface,params);
         updateZoom();
@@ -59,8 +62,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private final Deque<Bitmap> undoStack=new ArrayDeque<>();
         private final Deque<Bitmap> redoStack=new ArrayDeque<>();
 
-        PaintSurface(){
-            super(a);
+        private final String sourceUri;
+        private boolean sourceLoaded=false;
+
+        PaintSurface(String uri){
+            super(a);sourceUri=uri;
             setBackgroundColor(Color.WHITE);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeCap(Paint.Cap.ROUND);
@@ -76,6 +82,18 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(bitmap!=null)nextCanvas.drawBitmap(bitmap,0,0,null);
             bitmap=next;
             bitmapCanvas=nextCanvas;
+            if(!sourceLoaded&&sourceUri!=null){loadSourceImage(w,h);sourceLoaded=true;}
+        }
+
+        private void loadSourceImage(int maxW,int maxH){
+            try(InputStream in=a.getContentResolver().openInputStream(Uri.parse(sourceUri))){
+                Bitmap source=BitmapFactory.decodeStream(in);if(source==null)return;
+                float scale=Math.min((float)maxW/source.getWidth(),(float)maxH/source.getHeight());scale=Math.min(1f,scale);
+                int w=Math.max(1,Math.round(source.getWidth()*scale)),h=Math.max(1,Math.round(source.getHeight()*scale));
+                Bitmap fitted=scale<1f?Bitmap.createScaledBitmap(source,w,h,true):source;
+                bitmapCanvas.drawColor(Color.WHITE);float left=(maxW-w)/2f,top=(maxH-h)/2f;bitmapCanvas.drawBitmap(fitted,left,top,null);
+                if(fitted!=source)fitted.recycle();source.recycle();undoStack.clear();redoStack.clear();
+            }catch(Exception ignored){}
         }
 
         @Override protected void onDraw(Canvas canvas){
