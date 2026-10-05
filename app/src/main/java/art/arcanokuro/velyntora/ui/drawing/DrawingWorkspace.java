@@ -38,7 +38,7 @@ public final class DrawingWorkspace {
 
         Runnable export=()->{if(a instanceof art.arcanokuro.velyntora.MainActivity)((art.arcanokuro.velyntora.MainActivity)a).exportDrawing(canvas,documentName);};
         root.addView(topBar.createMenu(onBack,canvas::undo,canvas::redo,export,documentName),new LinearLayout.LayoutParams(-1,dp(42)));
-        root.addView(topBar.createToolOptions(),new LinearLayout.LayoutParams(-1,dp(46)));
+        root.addView(topBar.createToolOptions(canvas::addLayer,canvas::removeLayer,canvas::nextLayer,canvas::toggleLayerVisibility),new LinearLayout.LayoutParams(-1,dp(46)));
 
         LinearLayout body=row();
         body.addView(toolbox.create(),new LinearLayout.LayoutParams(dp(150),-1));
