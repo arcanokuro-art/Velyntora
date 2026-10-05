@@ -26,6 +26,7 @@ public final class DrawingWorkspace {
         statusBar=new DrawingStatusBar(activity,state);
         canvas=new DrawingCanvas(activity,state);
         state.addListener(canvas);
+        state.addListener(statusBar);
     }
 
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
