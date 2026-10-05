@@ -160,11 +160,11 @@ public final class StartScreen {
         LinearLayout workspace=col();
         workspace.setBackgroundColor(bg);
         workspace.setGravity(Gravity.CENTER);
-        TextView title=txt(animation?"Entorno de Animación":"Entorno de Dibujo",28,text,true);
+        TextView title=txt("Entorno de Animación",28,text,true);
         title.setGravity(Gravity.CENTER);
         workspace.addView(title,new LinearLayout.LayoutParams(-1,dp(64)));
         String message=source==null
-                ? (animation?"Preparado para integrar el núcleo de animación de Velyntora.":"Preparado para integrar el núcleo de dibujo de Velyntora.")
+                ? "Preparado para integrar el núcleo de animación de Velyntora."
                 : "Archivo seleccionado: "+source;
         TextView status=txt(message,15,muted,false);
         status.setGravity(Gravity.CENTER);
