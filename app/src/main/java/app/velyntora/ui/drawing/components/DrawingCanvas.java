@@ -130,7 +130,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 int w=Math.max(1,Math.round(source.getWidth()*scale)),h=Math.max(1,Math.round(source.getHeight()*scale));
                 Bitmap fitted=scale<1f?Bitmap.createScaledBitmap(source,w,h,true):source;
                 bitmapCanvas.drawColor(Color.WHITE);float left=(maxW-w)/2f,top=(maxH-h)/2f;bitmapCanvas.drawBitmap(fitted,left,top,null);
-                if(fitted!=source)fitted.recycle();source.recycle();undoStack.clear();redoStack.clear();
+                if(fitted!=source)fitted.recycle();source.recycle();clearBitmapStack(undoStack);clearBitmapStack(redoStack);
             }catch(Exception ignored){}
         }
 
@@ -165,12 +165,12 @@ public final class DrawingCanvas implements DrawingState.Listener {
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
                     if("Relleno".equals(state.tool())){
-                        saveUndoSnapshot();redoStack.clear();floodFill(Math.round(x),Math.round(y),state.color());invalidate();return true;
+                        saveUndoSnapshot();clearBitmapStack(redoStack);floodFill(Math.round(x),Math.round(y),state.color());invalidate();return true;
                     }
                     if("Línea/Curva".equals(state.tool())&&curvePending){
-                        saveUndoSnapshot();redoStack.clear();curving=true;controlX=x;controlY=y;invalidate();return true;
+                        saveUndoSnapshot();clearBitmapStack(redoStack);curving=true;controlX=x;controlY=y;invalidate();return true;
                     }
-                    saveUndoSnapshot();redoStack.clear();
+                    saveUndoSnapshot();clearBitmapStack(redoStack);
                     startX=currentX=x;startY=currentY=y;
                     path.reset();path.moveTo(x,y);lastX=x;lastY=y;invalidate();return true;
                 case MotionEvent.ACTION_MOVE:
@@ -221,7 +221,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(e.getActionMasked()!=MotionEvent.ACTION_DOWN)return true;final float x=e.getX(),y=e.getY();state.setPointer(Math.round(x),Math.round(y));
             EditText input=new EditText(a);input.setSingleLine(false);input.setHint("Texto");
             new AlertDialog.Builder(a).setTitle("Agregar texto").setView(input).setNegativeButton("Cancelar",null).setPositiveButton("Insertar",(d,w)->{
-                String value=input.getText().toString();if(value.trim().isEmpty()||bitmapCanvas==null)return;saveUndoSnapshot();redoStack.clear();
+                String value=input.getText().toString();if(value.trim().isEmpty()||bitmapCanvas==null)return;saveUndoSnapshot();clearBitmapStack(redoStack);
                 Paint tp=new Paint(Paint.ANTI_ALIAS_FLAG);tp.setColor(state.color());tp.setAlpha(Math.round(255*(state.opacity()/100f)));tp.setTextSize(dp(Math.max(12,state.brushSize()*2)));float yy=y;
                 for(String line:value.split("\\n",-1)){bitmapCanvas.drawText(line,x,yy,tp);yy+=tp.getTextSize()*1.2f;}invalidate();
             }).show();return true;
@@ -239,7 +239,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handlePolygon(MotionEvent e){
             if(e.getActionMasked()!=MotionEvent.ACTION_DOWN)return true;float x=e.getX(),y=e.getY();state.setPointer(Math.round(x),Math.round(y));
             if(!polygonPoints.isEmpty()){float[] first=polygonPoints.get(0);float dx=x-first[0],dy=y-first[1];if(polygonPoints.size()>=3&&dx*dx+dy*dy<=dp(18)*dp(18)){
-                saveUndoSnapshot();redoStack.clear();configurePaint();Path poly=new Path();poly.moveTo(first[0],first[1]);for(int i=1;i<polygonPoints.size();i++){float[] p=polygonPoints.get(i);poly.lineTo(p[0],p[1]);}poly.close();bitmapCanvas.drawPath(poly,paint);polygonPoints.clear();invalidate();return true;}}
+                saveUndoSnapshot();clearBitmapStack(redoStack);configurePaint();Path poly=new Path();poly.moveTo(first[0],first[1]);for(int i=1;i<polygonPoints.size();i++){float[] p=polygonPoints.get(i);poly.lineTo(p[0],p[1]);}poly.close();bitmapCanvas.drawPath(poly,paint);polygonPoints.clear();invalidate();return true;}}
             polygonPoints.add(new float[]{x,y});invalidate();return true;
         }
 
@@ -247,7 +247,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(bitmap==null)return false;
             switch(e.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
-                    saveUndoSnapshot();redoStack.clear();transformStartX=e.getX();transformStartY=e.getY();
+                    saveUndoSnapshot();clearBitmapStack(redoStack);transformStartX=e.getX();transformStartY=e.getY();
                     if(selectionRect!=null&&selectionRect.width()>1&&selectionRect.height()>1){
                         int l=Math.max(0,(int)selectionRect.left),t=Math.max(0,(int)selectionRect.top),r=Math.min(bitmap.getWidth(),(int)selectionRect.right),b=Math.min(bitmap.getHeight(),(int)selectionRect.bottom);
                         if(r>l&&b>t){selectionBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);selectionPixels=Bitmap.createBitmap(bitmap,l,t,r-l,b-t);selectionOrigin=new RectF(l,t,r,b);}
@@ -270,7 +270,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handleTransformContent(MotionEvent e){
             if(bitmap==null)return false;
             switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();redoStack.clear();transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();return true;
+                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();clearBitmapStack(redoStack);transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();return true;
                 case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
                     if(transformBase==null)return true;float factor=Math.max(0.1f,Math.min(3f,1f+(e.getX()-transformStartX)/Math.max(1f,getWidth())));
                     int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));Bitmap scaled=Bitmap.createScaledBitmap(transformBase,nw,nh,true);
@@ -280,13 +280,13 @@ public final class DrawingCanvas implements DrawingState.Listener {
             }
         }
 
-        void clearActiveLayer(){if(bitmap==null)return;saveUndoSnapshot();redoStack.clear();bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();}
+        void clearActiveLayer(){if(bitmap==null)return;saveUndoSnapshot();clearBitmapStack(redoStack);bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();}
 
         Bitmap composite(){return layers==null?bitmap:layers.composite(getWidth(),getHeight());}
 
-        void addLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);layers.add(getWidth(),getHeight());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);undoStack.clear();redoStack.clear();invalidate();}
-        void removeLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);undoStack.clear();redoStack.clear();invalidate();}}
-        void nextLayer(){if(layers==null||layers.all().isEmpty())return;layers.active().setBitmap(bitmap);layers.setActive((layers.activeIndex()+1)%layers.all().size());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);undoStack.clear();redoStack.clear();invalidate();}
+        void addLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);layers.add(getWidth(),getHeight());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
+        void removeLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}}
+        void nextLayer(){if(layers==null||layers.all().isEmpty())return;layers.active().setBitmap(bitmap);layers.setActive((layers.activeIndex()+1)%layers.all().size());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
         void toggleLayerVisibility(){if(layers==null)return;layers.active().setVisible(!layers.active().visible());invalidate();}
 
         void undo(){
@@ -301,10 +301,14 @@ public final class DrawingCanvas implements DrawingState.Listener {
             bitmap=redoStack.pop();bitmapCanvas=new Canvas(bitmap);invalidate();
         }
 
+        private void clearBitmapStack(Deque<Bitmap> stack){
+            while(!stack.isEmpty()){Bitmap old=stack.pop();if(old!=null&&!old.isRecycled())old.recycle();}
+        }
+
         private void saveUndoSnapshot(){
             if(bitmap==null)return;
             undoStack.push(bitmap.copy(Bitmap.Config.ARGB_8888,true));
-            while(undoStack.size()>30)undoStack.removeLast();
+            while(undoStack.size()>30){Bitmap old=undoStack.removeLast();if(old!=null&&!old.isRecycled())old.recycle();}
         }
 
         private boolean supportsDrawingTool(){
