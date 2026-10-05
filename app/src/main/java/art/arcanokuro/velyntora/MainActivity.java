@@ -20,6 +20,7 @@ public class MainActivity extends Activity {
     private String openedDocument=null;
     private String openedDocumentUri=null;
     private String infoPage=null;
+    private art.arcanokuro.velyntora.ui.drawing.components.DrawingCanvas exportCanvas=null;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -48,12 +49,23 @@ public class MainActivity extends Activity {
         Uri uri=data.getData();
         if(uri==null) return;
         boolean animation=requestCode==2002;
+        if(requestCode==3001 && exportCanvas!=null){
+            boolean ok=exportCanvas.exportPng(uri);exportCanvas=null;
+            android.widget.Toast.makeText(this,ok?"PNG exportado":"No se pudo exportar",android.widget.Toast.LENGTH_SHORT).show();return;
+        }
         if(requestCode==2001 || requestCode==2002) {
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (SecurityException ignored) {}
             showWorkspace(animation,displayName(uri),uri.toString());
         }
+    }
+
+    public void exportDrawing(art.arcanokuro.velyntora.ui.drawing.components.DrawingCanvas canvas,String suggestedName){
+        exportCanvas=canvas;
+        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("image/png");
+        String name=(suggestedName==null||suggestedName.startsWith("["))?"velyntora-dibujo.png":suggestedName.replaceAll("\\.[^.]+$","")+".png";
+        intent.putExtra(Intent.EXTRA_TITLE,name);startActivityForResult(intent,3001);
     }
 
     public void showHome() {
