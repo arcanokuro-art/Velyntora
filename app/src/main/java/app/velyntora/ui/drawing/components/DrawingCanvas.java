@@ -8,6 +8,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.view.MotionEvent;
 import android.net.Uri;
 import java.io.InputStream;
@@ -247,11 +249,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
                     float dx=e.getX()-transformStartX,dy=e.getY()-transformStartY;
                     if(selectionPixels!=null&&selectionBase!=null){
-                        bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
-                        Paint clear=new Paint();clear.setColor(Color.WHITE);clear.setStyle(Paint.Style.FILL);bitmapCanvas.drawRect(selectionOrigin,clear);
+                        bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
+                        Paint clear=new Paint();clear.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));clear.setStyle(Paint.Style.FILL);bitmapCanvas.drawRect(selectionOrigin,clear);
                         bitmapCanvas.drawBitmap(selectionPixels,selectionOrigin.left+dx,selectionOrigin.top+dy,null);
                         selectionRect=new RectF(selectionOrigin);selectionRect.offset(dx,dy);
-                    }else if(transformBase!=null){bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);}
+                    }else if(transformBase!=null){bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);}
                     invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){if(transformBase!=null)transformBase.recycle();transformBase=null;if(selectionBase!=null)selectionBase.recycle();selectionBase=null;if(selectionPixels!=null)selectionPixels.recycle();selectionPixels=null;selectionOrigin=null;}return true;
                 case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
@@ -265,7 +267,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
                     if(transformBase==null)return true;float factor=Math.max(0.1f,Math.min(3f,1f+(e.getX()-transformStartX)/Math.max(1f,getWidth())));
                     int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));Bitmap scaled=Bitmap.createScaledBitmap(transformBase,nw,nh,true);
-                    bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(scaled,(getWidth()-nw)/2f,(getHeight()-nh)/2f,null);scaled.recycle();invalidate();
+                    bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(scaled,(getWidth()-nw)/2f,(getHeight()-nh)/2f,null);scaled.recycle();invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
                 case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
             }
@@ -324,9 +326,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private void configurePaint(){
             paint.setStrokeWidth(dp(state.brushSize()));
             if("Borrador".equals(state.tool())){
-                paint.setColor(Color.WHITE);
+                paint.setColor(Color.TRANSPARENT);
                 paint.setAlpha(255);
+                paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
             }else{
+                paint.setXfermode(null);
                 paint.setColor(state.color());
                 paint.setAlpha(Math.round(255*(state.opacity()/100f)));
             }
