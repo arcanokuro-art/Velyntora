@@ -73,7 +73,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean curvePending=false,curving=false;
         private Bitmap curveBase;
         private Bitmap transformBase;
-        private RectF selectionRect;
+        private Bitmap selectionBase,selectionPixels;
+        private RectF selectionRect,selectionOrigin;
         private final List<float[]> polygonPoints=new ArrayList<>();
         private float transformStartX,transformStartY;
         private final Deque<Bitmap> undoStack=new ArrayDeque<>();
@@ -225,11 +226,23 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handleMoveContent(MotionEvent e){
             if(bitmap==null)return false;
             switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();redoStack.clear();transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();transformStartY=e.getY();return true;
+                case MotionEvent.ACTION_DOWN:
+                    saveUndoSnapshot();redoStack.clear();transformStartX=e.getX();transformStartY=e.getY();
+                    if(selectionRect!=null&&selectionRect.width()>1&&selectionRect.height()>1){
+                        int l=Math.max(0,(int)selectionRect.left),t=Math.max(0,(int)selectionRect.top),r=Math.min(bitmap.getWidth(),(int)selectionRect.right),b=Math.min(bitmap.getHeight(),(int)selectionRect.bottom);
+                        if(r>l&&b>t){selectionBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);selectionPixels=Bitmap.createBitmap(bitmap,l,t,r-l,b-t);selectionOrigin=new RectF(l,t,r,b);}
+                    }
+                    if(selectionPixels==null)transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);return true;
                 case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
-                    if(transformBase==null)return true;float dx=e.getX()-transformStartX,dy=e.getY()-transformStartY;
-                    bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);invalidate();
-                    if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
+                    float dx=e.getX()-transformStartX,dy=e.getY()-transformStartY;
+                    if(selectionPixels!=null&&selectionBase!=null){
+                        bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
+                        Paint clear=new Paint();clear.setColor(Color.WHITE);clear.setStyle(Paint.Style.FILL);bitmapCanvas.drawRect(selectionOrigin,clear);
+                        bitmapCanvas.drawBitmap(selectionPixels,selectionOrigin.left+dx,selectionOrigin.top+dy,null);
+                        selectionRect=new RectF(selectionOrigin);selectionRect.offset(dx,dy);
+                    }else if(transformBase!=null){bitmap.eraseColor(Color.WHITE);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);}
+                    invalidate();
+                    if(e.getActionMasked()==MotionEvent.ACTION_UP){if(transformBase!=null)transformBase.recycle();transformBase=null;if(selectionBase!=null)selectionBase.recycle();selectionBase=null;if(selectionPixels!=null)selectionPixels.recycle();selectionPixels=null;selectionOrigin=null;}return true;
                 case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
             }
         }
