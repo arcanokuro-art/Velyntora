@@ -35,7 +35,7 @@ public final class DrawingWorkspace {
         LinearLayout root=col();
         root.setBackgroundColor(Color.rgb(31,31,31));
 
-        root.addView(topBar.createMenu(onBack,documentName),new LinearLayout.LayoutParams(-1,dp(42)));
+        root.addView(topBar.createMenu(onBack,canvas::undo,canvas::redo,documentName),new LinearLayout.LayoutParams(-1,dp(42)));
         root.addView(topBar.createToolOptions(),new LinearLayout.LayoutParams(-1,dp(46)));
 
         LinearLayout body=row();
