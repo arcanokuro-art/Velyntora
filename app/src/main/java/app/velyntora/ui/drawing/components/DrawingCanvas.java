@@ -117,8 +117,15 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         private void loadSourceImage(int maxW,int maxH){
-            try(InputStream in=a.getContentResolver().openInputStream(Uri.parse(sourceUri))){
-                Bitmap source=BitmapFactory.decodeStream(in);if(source==null)return;
+            Uri uri=Uri.parse(sourceUri);
+            BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;
+            try(InputStream in=a.getContentResolver().openInputStream(uri)){BitmapFactory.decodeStream(in,null,bounds);}catch(Exception ignored){return;}
+            if(bounds.outWidth<=0||bounds.outHeight<=0)return;
+            int sample=1;
+            while(bounds.outWidth/sample>maxW*2||bounds.outHeight/sample>maxH*2)sample*=2;
+            BitmapFactory.Options options=new BitmapFactory.Options();options.inSampleSize=Math.max(1,sample);options.inPreferredConfig=Bitmap.Config.ARGB_8888;
+            try(InputStream in=a.getContentResolver().openInputStream(uri)){
+                Bitmap source=BitmapFactory.decodeStream(in,null,options);if(source==null)return;
                 float scale=Math.min((float)maxW/source.getWidth(),(float)maxH/source.getHeight());scale=Math.min(1f,scale);
                 int w=Math.max(1,Math.round(source.getWidth()*scale)),h=Math.max(1,Math.round(source.getHeight()*scale));
                 Bitmap fitted=scale<1f?Bitmap.createScaledBitmap(source,w,h,true):source;
