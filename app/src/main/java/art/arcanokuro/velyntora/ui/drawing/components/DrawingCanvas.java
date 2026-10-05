@@ -14,6 +14,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.EditText;
+import android.app.AlertDialog;
 
 import art.arcanokuro.velyntora.ui.drawing.DrawingState;
 
@@ -130,6 +132,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         @Override public boolean onTouchEvent(MotionEvent event){
             if("Mano".equals(state.tool()))return handlePan(event);
             if("Zoom".equals(state.tool()))return handleZoom(event);
+            if("Texto".equals(state.tool()))return handleText(event);
             if("Selección rectangular".equals(state.tool())||"Seleccionar".equals(state.tool()))return handleSelection(event);
             if("Polígono".equals(state.tool()))return handlePolygon(event);
             if("Mover".equals(state.tool()))return handleMoveContent(event);
@@ -191,6 +194,16 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handleZoom(MotionEvent e){
             if(e.getActionMasked()==MotionEvent.ACTION_DOWN){int next=state.zoom()>=400?100:Math.min(400,state.zoom()+25);state.setZoom(next);return true;}
             return e.getActionMasked()==MotionEvent.ACTION_UP;
+        }
+
+        private boolean handleText(MotionEvent e){
+            if(e.getActionMasked()!=MotionEvent.ACTION_DOWN)return true;final float x=e.getX(),y=e.getY();state.setPointer(Math.round(x),Math.round(y));
+            EditText input=new EditText(a);input.setSingleLine(false);input.setHint("Texto");
+            new AlertDialog.Builder(a).setTitle("Agregar texto").setView(input).setNegativeButton("Cancelar",null).setPositiveButton("Insertar",(d,w)->{
+                String value=input.getText().toString();if(value.trim().isEmpty()||bitmapCanvas==null)return;saveUndoSnapshot();redoStack.clear();
+                Paint tp=new Paint(Paint.ANTI_ALIAS_FLAG);tp.setColor(state.color());tp.setAlpha(Math.round(255*(state.opacity()/100f)));tp.setTextSize(dp(Math.max(12,state.brushSize()*2)));float yy=y;
+                for(String line:value.split("\\n",-1)){bitmapCanvas.drawText(line,x,yy,tp);yy+=tp.getTextSize()*1.2f;}invalidate();
+            }).show();return true;
         }
 
         private boolean handleSelection(MotionEvent e){
