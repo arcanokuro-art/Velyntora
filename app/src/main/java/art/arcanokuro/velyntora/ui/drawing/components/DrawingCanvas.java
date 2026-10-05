@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.app.AlertDialog;
 
 import art.arcanokuro.velyntora.ui.drawing.DrawingState;
+import art.arcanokuro.velyntora.ui.drawing.DrawingLayers;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -29,6 +30,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
     private final DrawingState state;
     private FrameLayout area;
     private PaintSurface surface;
+    private DrawingLayers layers;
     private float panX=0f,panY=0f,panStartX,panStartY,viewStartX,viewStartY;
 
     public DrawingCanvas(Activity activity,DrawingState drawingState){a=activity;state=drawingState;}
@@ -48,11 +50,17 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
     public void undo(){if(surface!=null)surface.undo();}
     public void redo(){if(surface!=null)surface.redo();}
+    public int layerCount(){return layers==null?0:layers.all().size();}
+    public int activeLayer(){return layers==null?0:layers.activeIndex();}
+    public void addLayer(){if(surface!=null)surface.addLayer();}
+    public void removeLayer(){if(surface!=null)surface.removeLayer();}
+    public void nextLayer(){if(surface!=null)surface.nextLayer();}
+    public void toggleLayerVisibility(){if(surface!=null)surface.toggleLayerVisibility();}
 
     public boolean exportPng(Uri destination){
         if(surface==null||surface.bitmap==null||destination==null)return false;
         try(OutputStream out=a.getContentResolver().openOutputStream(destination)){
-            return out!=null&&surface.bitmap.compress(Bitmap.CompressFormat.PNG,100,out);
+            Bitmap output=surface.composite();boolean ok=out!=null&&output.compress(Bitmap.CompressFormat.PNG,100,out);if(output!=surface.bitmap)output.recycle();return ok;
         }catch(Exception ignored){return false;}
     }
 
@@ -100,7 +108,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(bitmap!=null)nextCanvas.drawBitmap(bitmap,0,0,null);
             bitmap=next;
             bitmapCanvas=nextCanvas;
-            if(!sourceLoaded&&sourceUri!=null){loadSourceImage(w,h);sourceLoaded=true;}
+            if(layers==null){layers=new DrawingLayers(w,h);layers.active().setBitmap(bitmap);}
+            if(!sourceLoaded&&sourceUri!=null){loadSourceImage(w,h);sourceLoaded=true;layers.active().setBitmap(bitmap);}
         }
 
         private void loadSourceImage(int maxW,int maxH){
@@ -116,7 +125,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);
-            if(bitmap!=null)canvas.drawBitmap(bitmap,0,0,null);
+            if(bitmap!=null){Bitmap shown=composite();canvas.drawBitmap(shown,0,0,null);if(shown!=bitmap)shown.recycle();}
             canvas.drawPath(path,paint);
             if("Línea/Curva".equals(state.tool())){
                 configurePaint();
@@ -259,6 +268,13 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
             }
         }
+
+        Bitmap composite(){return layers==null?bitmap:layers.composite(getWidth(),getHeight());}
+
+        void addLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);layers.add(getWidth(),getHeight());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);undoStack.clear();redoStack.clear();invalidate();}
+        void removeLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);undoStack.clear();redoStack.clear();invalidate();}}
+        void nextLayer(){if(layers==null||layers.all().isEmpty())return;layers.active().setBitmap(bitmap);layers.setActive((layers.activeIndex()+1)%layers.all().size());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);undoStack.clear();redoStack.clear();invalidate();}
+        void toggleLayerVisibility(){if(layers==null)return;layers.active().setVisible(!layers.active().visible());invalidate();}
 
         void undo(){
             if(undoStack.isEmpty()||bitmap==null)return;
