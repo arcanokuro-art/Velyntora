@@ -56,6 +56,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
     public void removeLayer(){if(surface!=null)surface.removeLayer();}
     public void nextLayer(){if(surface!=null)surface.nextLayer();}
     public void toggleLayerVisibility(){if(surface!=null)surface.toggleLayerVisibility();}
+    public void clearActiveLayer(){if(surface!=null)surface.clearActiveLayer();}
 
     public boolean exportPng(Uri destination){
         if(surface==null||surface.bitmap==null||destination==null)return false;
@@ -268,6 +269,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_CANCEL:transformBase=null;return true;default:return false;
             }
         }
+
+        void clearActiveLayer(){if(bitmap==null)return;saveUndoSnapshot();redoStack.clear();bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();}
 
         Bitmap composite(){return layers==null?bitmap:layers.composite(getWidth(),getHeight());}
 
