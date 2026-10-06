@@ -1,8 +1,7 @@
-package app.velyntora.ui.start;
+package art.arcanokuro.velyntora.ui.start;
 
 import android.app.Activity;
-import app.velyntora.MainActivity;
-import app.velyntora.ui.drawing.DrawingWorkspace;
+import art.arcanokuro.velyntora.MainActivity;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -86,7 +85,7 @@ public final class StartScreen {
     }
 
     private Bitmap loadTransparentLogo(){
-        Bitmap source=BitmapFactory.decodeResource(a.getResources(), app.velyntora.R.drawable.velyntora_logo)
+        Bitmap source=BitmapFactory.decodeResource(a.getResources(), art.arcanokuro.velyntora.R.drawable.velyntora_logo)
                 .copy(Bitmap.Config.ARGB_8888,true);
         int w=source.getWidth(), h=source.getHeight();
         int[] pixels=new int[w*h];
@@ -115,8 +114,8 @@ public final class StartScreen {
         ImageView artwork=new ImageView(a);
         {
             artwork.setImageResource(animation
-                    ? app.velyntora.R.drawable.start_animation
-                    : app.velyntora.R.drawable.start_drawing);
+                    ? art.arcanokuro.velyntora.R.drawable.start_animation
+                    : art.arcanokuro.velyntora.R.drawable.start_drawing);
             artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
             artwork.setAlpha(1f);
 
@@ -155,18 +154,15 @@ public final class StartScreen {
         a.startActivityForResult(intent, animation?2002:2001);
     }
 
-    public View createWorkspace(boolean animation, String source){return createWorkspace(animation,source,null);}
-
-    public View createWorkspace(boolean animation, String source, String sourceUri){
-        if (!animation) return new DrawingWorkspace(a).create(source,sourceUri,this::showHome);
+    public View createWorkspace(boolean animation, String source){
         LinearLayout workspace=col();
         workspace.setBackgroundColor(bg);
         workspace.setGravity(Gravity.CENTER);
-        TextView title=txt("Entorno de Animación",28,text,true);
+        TextView title=txt(animation?"Entorno de Animación":"Entorno de Dibujo",28,text,true);
         title.setGravity(Gravity.CENTER);
         workspace.addView(title,new LinearLayout.LayoutParams(-1,dp(64)));
         String message=source==null
-                ? "Preparado para integrar el núcleo de animación de Velyntora."
+                ? (animation?"Preparado para integrar el núcleo de animación de Velyntora.":"Preparado para integrar el núcleo de dibujo de Velyntora.")
                 : "Archivo seleccionado: "+source;
         TextView status=txt(message,15,muted,false);
         status.setGravity(Gravity.CENTER);

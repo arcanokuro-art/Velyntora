@@ -1,4 +1,4 @@
-package app.velyntora;
+package art.arcanokuro.velyntora;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import android.os.Build;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import app.velyntora.ui.start.StartScreen;
+import art.arcanokuro.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
     private StartScreen startScreen;
@@ -20,14 +20,13 @@ public class MainActivity extends Activity {
     private String openedDocument=null;
     private String openedDocumentUri=null;
     private String infoPage=null;
-    private app.velyntora.ui.drawing.components.DrawingCanvas exportCanvas=null;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         int background = Color.rgb(13,20,32);
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
-        enableVelyntoraFullscreen();
+        enableKritaStyleFullscreen();
         startScreen = new StartScreen(this);
         if(state!=null && state.getString("infoPage")!=null) {
             infoPage=state.getString("infoPage");
@@ -37,7 +36,7 @@ public class MainActivity extends Activity {
             animationMode=state.getBoolean("animationMode",false);
             openedDocument=state.getString("openedDocument");
             openedDocumentUri=state.getString("openedDocumentUri");
-            setContentView(startScreen.createWorkspace(animationMode,openedDocument,openedDocumentUri));
+            setContentView(startScreen.createWorkspace(animationMode,openedDocument));
         } else {
             setContentView(startScreen.create());
         }
@@ -49,23 +48,12 @@ public class MainActivity extends Activity {
         Uri uri=data.getData();
         if(uri==null) return;
         boolean animation=requestCode==2002;
-        if(requestCode==3001 && exportCanvas!=null){
-            boolean ok=exportCanvas.exportPng(uri);exportCanvas=null;
-            android.widget.Toast.makeText(this,ok?"PNG exportado":"No se pudo exportar",android.widget.Toast.LENGTH_SHORT).show();return;
-        }
         if(requestCode==2001 || requestCode==2002) {
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (SecurityException ignored) {}
             showWorkspace(animation,displayName(uri),uri.toString());
         }
-    }
-
-    public void exportDrawing(app.velyntora.ui.drawing.components.DrawingCanvas canvas,String suggestedName){
-        exportCanvas=canvas;
-        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("image/png");
-        String name=(suggestedName==null||suggestedName.startsWith("["))?"velyntora-dibujo.png":suggestedName.replaceAll("\\.[^.]+$","")+".png";
-        intent.putExtra(Intent.EXTRA_TITLE,name);startActivityForResult(intent,3001);
     }
 
     public void showHome() {
@@ -87,7 +75,7 @@ public class MainActivity extends Activity {
         openedDocument=document;
         openedDocumentUri=documentUri;
         infoPage=null;
-        setContentView(startScreen.createWorkspace(animationMode,openedDocument,openedDocumentUri));
+        setContentView(startScreen.createWorkspace(animationMode,openedDocument));
     }
 
     public void showInfo(String page) {
@@ -119,10 +107,10 @@ public class MainActivity extends Activity {
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if(hasFocus) enableVelyntoraFullscreen();
+        if(hasFocus) enableKritaStyleFullscreen();
     }
 
-    private void enableVelyntoraFullscreen() {
+    private void enableKritaStyleFullscreen() {
         final View decor=getWindow().getDecorView();
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             final WindowInsetsController controller=getWindow().getInsetsController();
