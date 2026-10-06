@@ -36,6 +36,17 @@ public final class DrawingLayers {
         layers.add(layer);active=layers.size()-1;return layer;
     }
 
+    public void resize(int width,int height){
+        for(Layer layer:layers){
+            Bitmap old=layer.bitmap();
+            if(old!=null&&old.getWidth()==width&&old.getHeight()==height)continue;
+            Bitmap resized=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
+            if(old!=null)new Canvas(resized).drawBitmap(old,0,0,null);
+            layer.setBitmap(resized);
+            if(old!=null&&!old.isRecycled())old.recycle();
+        }
+    }
+
     public boolean removeActive(){
         if(layers.size()<=1)return false;
         Layer removed=layers.remove(active);
