@@ -263,7 +263,9 @@ public final class DrawingCanvas implements DrawingState.Listener {
             float x=e.getX(),y=e.getY();state.setPointer(Math.round(x),Math.round(y));
             switch(e.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:startX=x;startY=y;selectionRect=new RectF(x,y,x,y);invalidate();return true;
-                case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:selectionRect.set(Math.min(startX,x),Math.min(startY,y),Math.max(startX,x),Math.max(startY,y));invalidate();if(e.getActionMasked()==MotionEvent.ACTION_UP){startX=startY=-1f;}return true;
+                case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
+                    if(selectionRect==null||startX<0f||startY<0f){startX=startY=-1f;return true;}
+                    selectionRect.set(Math.min(startX,x),Math.min(startY,y),Math.max(startX,x),Math.max(startY,y));invalidate();if(e.getActionMasked()==MotionEvent.ACTION_UP){startX=startY=-1f;}return true;
                 case MotionEvent.ACTION_CANCEL:startX=startY=-1f;selectionRect=null;invalidate();return true;default:return false;
             }
         }
