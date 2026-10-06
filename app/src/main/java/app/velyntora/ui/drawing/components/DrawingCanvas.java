@@ -326,17 +326,21 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
         void undo(){
             if(undoStack.isEmpty()||bitmap==null)return;
-            redoStack.push(bitmap.copy(Bitmap.Config.ARGB_8888,true));
+            Bitmap replaced=bitmap;
+            redoStack.push(replaced.copy(Bitmap.Config.ARGB_8888,true));
             bitmap=undoStack.pop();bitmapCanvas=new Canvas(bitmap);
             if(layers!=null)layers.active().setBitmap(bitmap);
+            if(replaced!=bitmap&&!replaced.isRecycled())replaced.recycle();
             invalidate();
         }
 
         void redo(){
             if(redoStack.isEmpty()||bitmap==null)return;
-            undoStack.push(bitmap.copy(Bitmap.Config.ARGB_8888,true));
+            Bitmap replaced=bitmap;
+            undoStack.push(replaced.copy(Bitmap.Config.ARGB_8888,true));
             bitmap=redoStack.pop();bitmapCanvas=new Canvas(bitmap);
             if(layers!=null)layers.active().setBitmap(bitmap);
+            if(replaced!=bitmap&&!replaced.isRecycled())replaced.recycle();
             invalidate();
         }
 
