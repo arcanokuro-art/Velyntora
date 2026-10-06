@@ -210,7 +210,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                         floodFill(fillX,fillY,fillColor);invalidate();return true;
                     }
                     if("Línea/Curva".equals(state.tool())&&curvePending){
-                        saveUndoSnapshot();clearBitmapStack(redoStack);curving=true;controlX=x;controlY=y;invalidate();return true;
+                        saveUndoSnapshot();clearBitmapStack(redoStack);gestureUndoPending=true;curving=true;controlX=x;controlY=y;invalidate();return true;
                     }
                     saveUndoSnapshot();clearBitmapStack(redoStack);gestureUndoPending=true;
                     startX=currentX=x;startY=currentY=y;
@@ -225,7 +225,14 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     }
                     invalidate();return true;
                 case MotionEvent.ACTION_CANCEL:
-                    startX=startY=-1f;path.reset();curving=false;
+                    startX=startY=-1f;path.reset();
+                    if(curving&&curveBase!=null&&bitmap!=null){
+                        Bitmap replaced=bitmap;
+                        bitmap=curveBase.copy(Bitmap.Config.ARGB_8888,true);bitmapCanvas=new Canvas(bitmap);
+                        if(layers!=null)layers.active().setBitmap(bitmap);
+                        if(replaced!=bitmap&&!replaced.isRecycled())replaced.recycle();
+                    }
+                    curving=false;
                     if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
                     lineStartX=lineStartY=lineEndX=lineEndY=-1f;curvePending=false;
                     if(gestureUndoPending){discardLatestUndoSnapshot();gestureUndoPending=false;}invalidate();return true;
