@@ -370,7 +370,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         void toggleLayerVisibility(){if(layers==null)return;layers.active().setVisible(!layers.active().visible());invalidate();}
 
         void undo(){
-            if(undoStack.isEmpty()||bitmap==null)return;
+            if(undoStack.isEmpty()||bitmap==null||(layers!=null&&!layers.active().visible()))return;
             Bitmap replaced=bitmap;
             redoStack.push(replaced.copy(Bitmap.Config.ARGB_8888,true));
             bitmap=undoStack.pop();bitmapCanvas=new Canvas(bitmap);
@@ -380,7 +380,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         void redo(){
-            if(redoStack.isEmpty()||bitmap==null)return;
+            if(redoStack.isEmpty()||bitmap==null||(layers!=null&&!layers.active().visible()))return;
             Bitmap replaced=bitmap;
             undoStack.push(replaced.copy(Bitmap.Config.ARGB_8888,true));
             bitmap=redoStack.pop();bitmapCanvas=new Canvas(bitmap);
