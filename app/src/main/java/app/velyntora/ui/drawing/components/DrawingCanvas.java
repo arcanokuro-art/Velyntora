@@ -110,14 +110,17 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
         @Override protected void onSizeChanged(int w,int h,int oldw,int oldh){
             if(w<=0||h<=0)return;
+            Bitmap previous=bitmap;
             Bitmap next=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
             Canvas nextCanvas=new Canvas(next);
             nextCanvas.drawColor(Color.WHITE);
-            if(bitmap!=null)nextCanvas.drawBitmap(bitmap,0,0,null);
+            if(previous!=null)nextCanvas.drawBitmap(previous,0,0,null);
             bitmap=next;
             bitmapCanvas=nextCanvas;
             if(layers==null){layers=new DrawingLayers(w,h);}
             layers.active().setBitmap(bitmap);
+            if(previous!=null&&previous!=bitmap&&!previous.isRecycled())previous.recycle();
+            if(oldw>0&&oldh>0&&(oldw!=w||oldh!=h)){clearBitmapStack(undoStack);clearBitmapStack(redoStack);clearTransientDrawingState();}
             if(!sourceLoaded&&sourceUri!=null){loadSourceImage(w,h);sourceLoaded=true;layers.active().setBitmap(bitmap);}
         }
 
