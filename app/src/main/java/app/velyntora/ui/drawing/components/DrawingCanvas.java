@@ -205,8 +205,12 @@ public final class DrawingCanvas implements DrawingState.Listener {
                         path.quadTo(lastX,lastY,midX,midY);lastX=x;lastY=y;
                     }
                     invalidate();return true;
-                case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
+                    startX=startY=-1f;path.reset();curving=false;
+                    if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
+                    lineStartX=lineStartY=lineEndX=lineEndY=-1f;curvePending=false;
+                    discardLatestUndoSnapshot();invalidate();return true;
+                case MotionEvent.ACTION_UP:
                     currentX=x;currentY=y;
                     if(bitmapCanvas!=null){
                         if(curving){
