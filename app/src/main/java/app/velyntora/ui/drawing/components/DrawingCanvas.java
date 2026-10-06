@@ -296,7 +296,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;
                     if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
                     if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
-                    selectionOrigin=null;invalidate();return true;default:return false;
+                    selectionOrigin=null;discardLatestUndoSnapshot();invalidate();return true;default:return false;
             }
         }
 
@@ -314,8 +314,9 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_CANCEL:
                     if(transformBase!=null){
                         bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,0,0,null);
-                        if(!transformBase.isRecycled())transformBase.recycle();transformBase=null;invalidate();
+                        if(!transformBase.isRecycled())transformBase.recycle();transformBase=null;
                     }
+                    discardLatestUndoSnapshot();invalidate();
                     return true;default:return false;
             }
         }
@@ -356,6 +357,12 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(layers!=null)layers.active().setBitmap(bitmap);
             if(replaced!=bitmap&&!replaced.isRecycled())replaced.recycle();
             invalidate();
+        }
+
+        private void discardLatestUndoSnapshot(){
+            if(undoStack.isEmpty())return;
+            Bitmap cancelled=undoStack.pop();
+            if(cancelled!=null&&!cancelled.isRecycled())cancelled.recycle();
         }
 
         private void clearBitmapStack(Deque<Bitmap> stack){
