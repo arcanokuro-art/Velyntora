@@ -423,12 +423,19 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         private void cancelTransientStateForHistory(){
+            boolean interruptedTransform=transformBase!=null||selectionBase!=null;
+            if(selectionBase!=null&&bitmap!=null){
+                bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
+            }else if(transformBase!=null&&bitmap!=null){
+                bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,0,0,null);
+            }
             polygonPoints.clear();selectionRect=null;selectionOrigin=null;path.reset();
             startX=startY=-1f;lineStartX=lineStartY=lineEndX=lineEndY=-1f;curvePending=false;curving=false;
             if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
             if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;
             if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
             if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
+            if(interruptedTransform)discardLatestUndoSnapshot();
         }
 
         private void discardLatestUndoSnapshot(){
