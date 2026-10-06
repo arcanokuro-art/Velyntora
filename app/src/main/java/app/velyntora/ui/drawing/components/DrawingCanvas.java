@@ -116,7 +116,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 if(bitmap!=null){
                     new Canvas(initial).drawBitmap(bitmap,0,0,null);
                     if(!bitmap.isRecycled())bitmap.recycle();
-                }else new Canvas(initial).drawColor(Color.WHITE);
+                }else new Canvas(initial).drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
             }else layers.resize(w,h);
             bitmap=layers.active().bitmap();
             bitmapCanvas=new Canvas(bitmap);
