@@ -194,14 +194,14 @@ public final class DrawingCanvas implements DrawingState.Listener {
                             controlX=x;controlY=y;
                             if(curveBase!=null){bitmap=curveBase.copy(Bitmap.Config.ARGB_8888,true);bitmapCanvas=new Canvas(bitmap);if(layers!=null)layers.active().setBitmap(bitmap);}
                             Path curve=new Path();curve.moveTo(lineStartX,lineStartY);curve.quadTo(controlX,controlY,lineEndX,lineEndY);bitmapCanvas.drawPath(curve,paint);
-                            curving=false;curvePending=false;curveBase=null;lineStartX=-1f;
+                            curving=false;curvePending=false;if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;lineStartX=-1f;
                         }else if(isShapeTool()){
-                            drawShape(bitmapCanvas,startX,startY,currentX,currentY);curvePending=false;curveBase=null;
+                            drawShape(bitmapCanvas,startX,startY,currentX,currentY);curvePending=false;if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
                         }else if("Línea/Curva".equals(state.tool())){
                             lineStartX=startX;lineStartY=startY;lineEndX=currentX;lineEndY=currentY;
-                            curveBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);
+                            if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);
                             bitmapCanvas.drawLine(lineStartX,lineStartY,lineEndX,lineEndY,paint);curvePending=true;
-                        }else {path.lineTo(x,y);bitmapCanvas.drawPath(path,paint);curvePending=false;curveBase=null;}
+                        }else {path.lineTo(x,y);bitmapCanvas.drawPath(path,paint);curvePending=false;if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;}
                     }
                     startX=startY=-1f;path.reset();invalidate();return true;
                 default:return false;
