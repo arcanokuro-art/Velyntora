@@ -375,6 +375,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
             if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
             if(interruptedTransform)discardLatestUndoSnapshot();
+            else if(gestureUndoPending)discardLatestUndoSnapshot();
+            gestureUndoPending=false;
         }
 
         void clearActiveLayer(){
