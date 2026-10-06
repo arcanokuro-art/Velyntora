@@ -336,7 +336,20 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
         }
 
-        void clearActiveLayer(){if(bitmap==null)return;saveUndoSnapshot();clearBitmapStack(redoStack);bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();}
+        void clearActiveLayer(){
+            if(bitmap==null||isBitmapTransparent(bitmap))return;
+            saveUndoSnapshot();clearBitmapStack(redoStack);bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();
+        }
+
+        private boolean isBitmapTransparent(Bitmap source){
+            int w=source.getWidth(),h=source.getHeight();
+            int[] row=new int[w];
+            for(int y=0;y<h;y++){
+                source.getPixels(row,0,w,0,y,w,1);
+                for(int pixel:row)if((pixel>>>24)!=0)return false;
+            }
+            return true;
+        }
 
         Bitmap composite(){return layers==null?bitmap:layers.composite(getWidth(),getHeight());}
 
