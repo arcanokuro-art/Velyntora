@@ -276,7 +276,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(bitmap==null)return false;
             switch(e.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
-                    saveUndoSnapshot();clearBitmapStack(redoStack);transformStartX=e.getX();transformStartY=e.getY();
+                    saveUndoSnapshot();transformStartX=e.getX();transformStartY=e.getY();
                     if(selectionRect!=null&&selectionRect.width()>1&&selectionRect.height()>1){
                         int l=Math.max(0,(int)selectionRect.left),t=Math.max(0,(int)selectionRect.top),r=Math.min(bitmap.getWidth(),(int)selectionRect.right),b=Math.min(bitmap.getHeight(),(int)selectionRect.bottom);
                         if(r>l&&b>t){selectionBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);selectionPixels=Bitmap.createBitmap(bitmap,l,t,r-l,b-t);selectionOrigin=new RectF(l,t,r,b);}
@@ -291,7 +291,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
                         selectionRect=new RectF(selectionOrigin);selectionRect.offset(dx,dy);
                     }else if(transformBase!=null){bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);}
                     invalidate();
-                    if(e.getActionMasked()==MotionEvent.ACTION_UP){if(transformBase!=null)transformBase.recycle();transformBase=null;if(selectionBase!=null)selectionBase.recycle();selectionBase=null;if(selectionPixels!=null)selectionPixels.recycle();selectionPixels=null;selectionOrigin=null;}return true;
+                    if(e.getActionMasked()==MotionEvent.ACTION_UP){
+                        boolean changed=Math.abs(dx)>0.001f||Math.abs(dy)>0.001f;
+                        if(changed)clearBitmapStack(redoStack);else discardLatestUndoSnapshot();
+                        if(transformBase!=null)transformBase.recycle();transformBase=null;if(selectionBase!=null)selectionBase.recycle();selectionBase=null;if(selectionPixels!=null)selectionPixels.recycle();selectionPixels=null;selectionOrigin=null;
+                    }return true;
                 case MotionEvent.ACTION_CANCEL:
                     if(selectionBase!=null){
                         bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
@@ -309,14 +313,18 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private boolean handleTransformContent(MotionEvent e){
             if(bitmap==null)return false;
             switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();clearBitmapStack(redoStack);transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();return true;
+                case MotionEvent.ACTION_DOWN:saveUndoSnapshot();transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();return true;
                 case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
                     if(transformBase==null)return true;float factor=Math.max(0.1f,Math.min(3f,1f+(e.getX()-transformStartX)/Math.max(1f,getWidth())));
                     int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));
                     float left=(getWidth()-nw)/2f,top=(getHeight()-nh)/2f;
                     RectF destination=new RectF(left,top,left+nw,top+nh);
                     bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,null,destination,paint);invalidate();
-                    if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
+                    if(e.getActionMasked()==MotionEvent.ACTION_UP){
+                        boolean changed=nw!=transformBase.getWidth()||nh!=transformBase.getHeight();
+                        if(changed)clearBitmapStack(redoStack);else discardLatestUndoSnapshot();
+                        transformBase.recycle();transformBase=null;
+                    }return true;
                 case MotionEvent.ACTION_CANCEL:
                     if(transformBase!=null){
                         bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,0,0,null);
