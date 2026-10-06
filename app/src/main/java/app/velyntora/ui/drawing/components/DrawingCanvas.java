@@ -34,8 +34,9 @@ public final class DrawingCanvas implements DrawingState.Listener {
     private PaintSurface surface;
     private DrawingLayers layers;
     private float panX=0f,panY=0f,panStartX,panStartY,viewStartX,viewStartY;
+    private String lastTool;
 
-    public DrawingCanvas(Activity activity,DrawingState drawingState){a=activity;state=drawingState;}
+    public DrawingCanvas(Activity activity,DrawingState drawingState){a=activity;state=drawingState;lastTool=drawingState.tool();}
     private int dp(int v){return Math.round(v*a.getResources().getDisplayMetrics().density);}
 
     public View create(String documentName,String sourceUri){
@@ -48,7 +49,11 @@ public final class DrawingCanvas implements DrawingState.Listener {
         return area;
     }
 
-    @Override public void onDrawingStateChanged(DrawingState ignored){updateTransform();if(surface!=null)surface.invalidate();}
+    @Override public void onDrawingStateChanged(DrawingState ignored){
+        String tool=state.tool();
+        if(surface!=null&&lastTool!=null&&!lastTool.equals(tool))surface.onToolChanged(lastTool,tool);
+        lastTool=tool;updateTransform();if(surface!=null)surface.invalidate();
+    }
 
     public void undo(){if(surface!=null)surface.undo();}
     public void redo(){if(surface!=null)surface.redo();}
@@ -148,6 +153,17 @@ public final class DrawingCanvas implements DrawingState.Listener {
             }
             if(selectionRect!=null){Paint sel=new Paint(Paint.ANTI_ALIAS_FLAG);sel.setStyle(Paint.Style.STROKE);sel.setStrokeWidth(dp(1));sel.setColor(Color.rgb(40,140,255));sel.setPathEffect(new android.graphics.DashPathEffect(new float[]{dp(6),dp(4)},0));canvas.drawRect(selectionRect,sel);}
             if(!polygonPoints.isEmpty()){configurePaint();Path poly=new Path();float[] first=polygonPoints.get(0);poly.moveTo(first[0],first[1]);for(int i=1;i<polygonPoints.size();i++){float[] p=polygonPoints.get(i);poly.lineTo(p[0],p[1]);}canvas.drawPath(poly,paint);}
+        }
+
+        void onToolChanged(String previous,String current){
+            if(!"Polígono".equals(current))polygonPoints.clear();
+            boolean keepSelection="Mover".equals(current)&&("Seleccionar".equals(previous)||"Selección rectangular".equals(previous));
+            if(!"Seleccionar".equals(current)&&!"Selección rectangular".equals(current)&&!"Mover".equals(current)&&!keepSelection)selectionRect=null;
+            if(!"Línea/Curva".equals(current)){
+                curvePending=false;curving=false;lineStartX=-1f;startX=startY=-1f;path.reset();
+                if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
+            }
+            invalidate();
         }
 
         @Override public boolean onTouchEvent(MotionEvent event){
