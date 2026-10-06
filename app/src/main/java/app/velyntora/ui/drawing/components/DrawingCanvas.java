@@ -137,7 +137,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 float scale=Math.min((float)maxW/source.getWidth(),(float)maxH/source.getHeight());scale=Math.min(1f,scale);
                 int w=Math.max(1,Math.round(source.getWidth()*scale)),h=Math.max(1,Math.round(source.getHeight()*scale));
                 Bitmap fitted=scale<1f?Bitmap.createScaledBitmap(source,w,h,true):source;
-                bitmapCanvas.drawColor(Color.WHITE);float left=(maxW-w)/2f,top=(maxH-h)/2f;bitmapCanvas.drawBitmap(fitted,left,top,null);
+                bitmapCanvas.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);float left=(maxW-w)/2f,top=(maxH-h)/2f;bitmapCanvas.drawBitmap(fitted,left,top,null);
                 if(fitted!=source)fitted.recycle();source.recycle();clearBitmapStack(undoStack);clearBitmapStack(redoStack);
             }catch(Exception ignored){}
         }
