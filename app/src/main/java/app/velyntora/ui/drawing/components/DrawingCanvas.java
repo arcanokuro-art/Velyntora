@@ -365,7 +365,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         Bitmap composite(){return layers==null?bitmap:layers.composite(getWidth(),getHeight());}
 
         void addLayer(){if(layers==null)return;clearTransientDrawingState();layers.active().setBitmap(bitmap);layers.add(getWidth(),getHeight());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
-        void removeLayer(){if(layers==null)return;clearTransientDrawingState();layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}}
+        void removeLayer(){if(layers==null||layers.all().size()<=1)return;clearTransientDrawingState();layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}}
         void nextLayer(){if(layers==null||layers.all().size()<=1)return;clearTransientDrawingState();layers.active().setBitmap(bitmap);layers.setActive((layers.activeIndex()+1)%layers.all().size());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
         void toggleLayerVisibility(){if(layers==null)return;layers.active().setVisible(!layers.active().visible());invalidate();}
 
