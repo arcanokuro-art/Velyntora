@@ -86,7 +86,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         private final Path path=new Path();
         private float lastX,lastY,startX=-1f,startY=-1f,currentX,currentY;
         private float lineStartX=-1f,lineStartY=-1f,lineEndX=-1f,lineEndY=-1f,controlX,controlY;
-        private boolean curvePending=false,curving=false;
+        private boolean curvePending=false,curving=false,gestureUndoPending=false;
         private Bitmap curveBase;
         private Bitmap transformBase;
         private Bitmap selectionBase,selectionPixels;
@@ -212,7 +212,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     if("Línea/Curva".equals(state.tool())&&curvePending){
                         saveUndoSnapshot();clearBitmapStack(redoStack);curving=true;controlX=x;controlY=y;invalidate();return true;
                     }
-                    saveUndoSnapshot();clearBitmapStack(redoStack);
+                    saveUndoSnapshot();clearBitmapStack(redoStack);gestureUndoPending=true;
                     startX=currentX=x;startY=currentY=y;
                     path.reset();path.moveTo(x,y);lastX=x;lastY=y;invalidate();return true;
                 case MotionEvent.ACTION_MOVE:
@@ -228,7 +228,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     startX=startY=-1f;path.reset();curving=false;
                     if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
                     lineStartX=lineStartY=lineEndX=lineEndY=-1f;curvePending=false;
-                    discardLatestUndoSnapshot();invalidate();return true;
+                    if(gestureUndoPending){discardLatestUndoSnapshot();gestureUndoPending=false;}invalidate();return true;
                 case MotionEvent.ACTION_UP:
                     currentX=x;currentY=y;
                     if(bitmapCanvas!=null){
@@ -245,7 +245,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
                             bitmapCanvas.drawLine(lineStartX,lineStartY,lineEndX,lineEndY,paint);curvePending=true;
                         }else {path.lineTo(x,y);bitmapCanvas.drawPath(path,paint);curvePending=false;if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;}
                     }
-                    startX=startY=-1f;path.reset();invalidate();return true;
+                    startX=startY=-1f;path.reset();gestureUndoPending=false;invalidate();return true;
                 default:return false;
             }
         }
@@ -436,6 +436,8 @@ public final class DrawingCanvas implements DrawingState.Listener {
             if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
             if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
             if(interruptedTransform)discardLatestUndoSnapshot();
+            else if(gestureUndoPending)discardLatestUndoSnapshot();
+            gestureUndoPending=false;
         }
 
         private void discardLatestUndoSnapshot(){
