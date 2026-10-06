@@ -267,7 +267,17 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     }else if(transformBase!=null){bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,dx,dy,null);}
                     invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){if(transformBase!=null)transformBase.recycle();transformBase=null;if(selectionBase!=null)selectionBase.recycle();selectionBase=null;if(selectionPixels!=null)selectionPixels.recycle();selectionPixels=null;selectionOrigin=null;}return true;
-                case MotionEvent.ACTION_CANCEL:if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;return true;default:return false;
+                case MotionEvent.ACTION_CANCEL:
+                    if(selectionBase!=null){
+                        bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
+                        if(selectionOrigin!=null)selectionRect=new RectF(selectionOrigin);
+                    }else if(transformBase!=null){
+                        bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,0,0,null);
+                    }
+                    if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;
+                    if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
+                    if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
+                    selectionOrigin=null;invalidate();return true;default:return false;
             }
         }
 
