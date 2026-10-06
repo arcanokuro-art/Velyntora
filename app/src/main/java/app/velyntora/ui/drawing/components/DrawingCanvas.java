@@ -375,9 +375,25 @@ public final class DrawingCanvas implements DrawingState.Listener {
             int w=bitmap.getWidth(),h=bitmap.getHeight();
             ArrayDeque<Integer> q=new ArrayDeque<>();q.add(sy*w+sx);
             while(!q.isEmpty()){
-                int p=q.removeFirst(),x=p%w,y=p/w;if(bitmap.getPixel(x,y)!=target)continue;
-                bitmap.setPixel(x,y,replacement);
-                if(x>0)q.add(p-1);if(x+1<w)q.add(p+1);if(y>0)q.add(p-w);if(y+1<h)q.add(p+w);
+                int point=q.removeFirst(),x=point%w,y=point/w;
+                if(bitmap.getPixel(x,y)!=target)continue;
+                int left=x,right=x;
+                while(left>0&&bitmap.getPixel(left-1,y)==target)left--;
+                while(right+1<w&&bitmap.getPixel(right+1,y)==target)right++;
+                boolean spanUp=false,spanDown=false;
+                for(int px=left;px<=right;px++){
+                    bitmap.setPixel(px,y,replacement);
+                    if(y>0){
+                        boolean match=bitmap.getPixel(px,y-1)==target;
+                        if(match&&!spanUp)q.add((y-1)*w+px);
+                        spanUp=match;
+                    }
+                    if(y+1<h){
+                        boolean match=bitmap.getPixel(px,y+1)==target;
+                        if(match&&!spanDown)q.add((y+1)*w+px);
+                        spanDown=match;
+                    }
+                }
             }
         }
 
