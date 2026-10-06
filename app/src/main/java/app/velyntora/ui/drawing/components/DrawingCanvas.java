@@ -315,13 +315,22 @@ public final class DrawingCanvas implements DrawingState.Listener {
             }
         }
 
+        private void clearTransientDrawingState(){
+            polygonPoints.clear();selectionRect=null;selectionOrigin=null;path.reset();
+            startX=startY=-1f;lineStartX=lineStartY=lineEndX=lineEndY=-1f;curvePending=false;curving=false;
+            if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
+            if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;
+            if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
+            if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
+        }
+
         void clearActiveLayer(){if(bitmap==null)return;saveUndoSnapshot();clearBitmapStack(redoStack);bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();}
 
         Bitmap composite(){return layers==null?bitmap:layers.composite(getWidth(),getHeight());}
 
-        void addLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);layers.add(getWidth(),getHeight());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
-        void removeLayer(){if(layers==null)return;layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}}
-        void nextLayer(){if(layers==null||layers.all().isEmpty())return;layers.active().setBitmap(bitmap);layers.setActive((layers.activeIndex()+1)%layers.all().size());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
+        void addLayer(){if(layers==null)return;clearTransientDrawingState();layers.active().setBitmap(bitmap);layers.add(getWidth(),getHeight());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
+        void removeLayer(){if(layers==null)return;clearTransientDrawingState();layers.active().setBitmap(bitmap);if(layers.removeActive()){bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}}
+        void nextLayer(){if(layers==null||layers.all().isEmpty())return;clearTransientDrawingState();layers.active().setBitmap(bitmap);layers.setActive((layers.activeIndex()+1)%layers.all().size());bitmap=layers.active().bitmap();bitmapCanvas=new Canvas(bitmap);clearBitmapStack(undoStack);clearBitmapStack(redoStack);invalidate();}
         void toggleLayerVisibility(){if(layers==null)return;layers.active().setVisible(!layers.active().visible());invalidate();}
 
         void undo(){
