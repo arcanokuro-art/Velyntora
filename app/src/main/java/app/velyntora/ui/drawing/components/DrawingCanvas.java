@@ -290,7 +290,12 @@ public final class DrawingCanvas implements DrawingState.Listener {
                     int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));Bitmap scaled=Bitmap.createScaledBitmap(transformBase,nw,nh,true);
                     bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(scaled,(getWidth()-nw)/2f,(getHeight()-nh)/2f,null);scaled.recycle();invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
-                case MotionEvent.ACTION_CANCEL:if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;return true;default:return false;
+                case MotionEvent.ACTION_CANCEL:
+                    if(transformBase!=null){
+                        bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,0,0,null);
+                        if(!transformBase.isRecycled())transformBase.recycle();transformBase=null;invalidate();
+                    }
+                    return true;default:return false;
             }
         }
 
