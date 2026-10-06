@@ -185,10 +185,12 @@ public final class DrawingCanvas implements DrawingState.Listener {
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
                     if("Relleno".equals(state.tool())){
-                        saveUndoSnapshot();clearBitmapStack(redoStack);
                         int fillAlpha=Math.round(255*(state.opacity()/100f));
                         int fillColor=(state.color()&0x00FFFFFF)|(fillAlpha<<24);
-                        floodFill(Math.round(x),Math.round(y),fillColor);invalidate();return true;
+                        int fillX=Math.round(x),fillY=Math.round(y);
+                        if(fillX<0||fillY<0||fillX>=bitmap.getWidth()||fillY>=bitmap.getHeight()||bitmap.getPixel(fillX,fillY)==fillColor)return true;
+                        saveUndoSnapshot();clearBitmapStack(redoStack);
+                        floodFill(fillX,fillY,fillColor);invalidate();return true;
                     }
                     if("Línea/Curva".equals(state.tool())&&curvePending){
                         saveUndoSnapshot();clearBitmapStack(redoStack);curving=true;controlX=x;controlY=y;invalidate();return true;
