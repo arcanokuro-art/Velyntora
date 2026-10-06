@@ -167,10 +167,18 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
             }
             if(("Mover".equals(previous)||"Transformar".equals(previous))&&!previous.equals(current)){
+                boolean interrupted=transformBase!=null||selectionBase!=null;
+                if(selectionBase!=null){
+                    bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(selectionBase,0,0,null);
+                    if(selectionOrigin!=null)selectionRect=new RectF(selectionOrigin);
+                }else if(transformBase!=null){
+                    bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,0,0,null);
+                }
                 if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;
                 if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
                 if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
                 selectionOrigin=null;
+                if(interrupted)discardLatestUndoSnapshot();
             }
             invalidate();
         }
