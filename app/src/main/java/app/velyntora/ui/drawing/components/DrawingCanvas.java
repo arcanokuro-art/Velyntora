@@ -402,6 +402,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
         void undo(){
             if(undoStack.isEmpty()||bitmap==null||(layers!=null&&!layers.active().visible()))return;
+            cancelTransientStateForHistory();
             Bitmap replaced=bitmap;
             redoStack.push(replaced.copy(Bitmap.Config.ARGB_8888,true));
             bitmap=undoStack.pop();bitmapCanvas=new Canvas(bitmap);
@@ -412,12 +413,22 @@ public final class DrawingCanvas implements DrawingState.Listener {
 
         void redo(){
             if(redoStack.isEmpty()||bitmap==null||(layers!=null&&!layers.active().visible()))return;
+            cancelTransientStateForHistory();
             Bitmap replaced=bitmap;
             undoStack.push(replaced.copy(Bitmap.Config.ARGB_8888,true));
             bitmap=redoStack.pop();bitmapCanvas=new Canvas(bitmap);
             if(layers!=null)layers.active().setBitmap(bitmap);
             if(replaced!=bitmap&&!replaced.isRecycled())replaced.recycle();
             invalidate();
+        }
+
+        private void cancelTransientStateForHistory(){
+            polygonPoints.clear();selectionRect=null;selectionOrigin=null;path.reset();
+            startX=startY=-1f;lineStartX=lineStartY=lineEndX=lineEndY=-1f;curvePending=false;curving=false;
+            if(curveBase!=null&&!curveBase.isRecycled())curveBase.recycle();curveBase=null;
+            if(transformBase!=null&&!transformBase.isRecycled())transformBase.recycle();transformBase=null;
+            if(selectionBase!=null&&!selectionBase.isRecycled())selectionBase.recycle();selectionBase=null;
+            if(selectionPixels!=null&&!selectionPixels.isRecycled())selectionPixels.recycle();selectionPixels=null;
         }
 
         private void discardLatestUndoSnapshot(){
