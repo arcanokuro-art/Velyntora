@@ -303,8 +303,10 @@ public final class DrawingCanvas implements DrawingState.Listener {
                 case MotionEvent.ACTION_DOWN:saveUndoSnapshot();clearBitmapStack(redoStack);transformBase=bitmap.copy(Bitmap.Config.ARGB_8888,true);transformStartX=e.getX();return true;
                 case MotionEvent.ACTION_MOVE:case MotionEvent.ACTION_UP:
                     if(transformBase==null)return true;float factor=Math.max(0.1f,Math.min(3f,1f+(e.getX()-transformStartX)/Math.max(1f,getWidth())));
-                    int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));Bitmap scaled=Bitmap.createScaledBitmap(transformBase,nw,nh,true);
-                    bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(scaled,(getWidth()-nw)/2f,(getHeight()-nh)/2f,null);scaled.recycle();invalidate();
+                    int nw=Math.max(1,Math.round(transformBase.getWidth()*factor)),nh=Math.max(1,Math.round(transformBase.getHeight()*factor));
+                    float left=(getWidth()-nw)/2f,top=(getHeight()-nh)/2f;
+                    RectF destination=new RectF(left,top,left+nw,top+nh);
+                    bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);bitmapCanvas.drawBitmap(transformBase,null,destination,paint);invalidate();
                     if(e.getActionMasked()==MotionEvent.ACTION_UP){transformBase.recycle();transformBase=null;}return true;
                 case MotionEvent.ACTION_CANCEL:
                     if(transformBase!=null){
