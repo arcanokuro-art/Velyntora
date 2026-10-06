@@ -348,7 +348,7 @@ public final class DrawingCanvas implements DrawingState.Listener {
         }
 
         void clearActiveLayer(){
-            if(bitmap==null||isBitmapTransparent(bitmap))return;
+            if(bitmap==null||(layers!=null&&!layers.active().visible())||isBitmapTransparent(bitmap))return;
             saveUndoSnapshot();clearBitmapStack(redoStack);bitmap.eraseColor(Color.TRANSPARENT);bitmapCanvas=new Canvas(bitmap);invalidate();
         }
 
