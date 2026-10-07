@@ -1,7 +1,7 @@
-package velyntora.ui.start;
+package app.velyntora.ui.start;
 
 import android.app.Activity;
-import velyntora.MainActivity;
+import app.velyntora.MainActivity;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -85,7 +85,7 @@ public final class StartScreen {
     }
 
     private Bitmap loadTransparentLogo(){
-        Bitmap source=BitmapFactory.decodeResource(a.getResources(), velyntora.R.drawable.velyntora_logo)
+        Bitmap source=BitmapFactory.decodeResource(a.getResources(), app.velyntora.R.drawable.velyntora_logo)
                 .copy(Bitmap.Config.ARGB_8888,true);
         int w=source.getWidth(), h=source.getHeight();
         int[] pixels=new int[w*h];
@@ -114,8 +114,8 @@ public final class StartScreen {
         ImageView artwork=new ImageView(a);
         {
             artwork.setImageResource(animation
-                    ? velyntora.R.drawable.start_animation
-                    : velyntora.R.drawable.start_drawing);
+                    ? app.velyntora.R.drawable.start_animation
+                    : app.velyntora.R.drawable.start_drawing);
             artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
             artwork.setAlpha(1f);
 
