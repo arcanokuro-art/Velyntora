@@ -1,10 +1,10 @@
 plugins { id 'com.android.application' }
 
 android {
-    namespace 'app.velyntora'
+    namespace 'art.arcanokuro.velyntora'
     compileSdk 35
     defaultConfig {
-        applicationId 'app.velyntora'
+        applicationId 'art.arcanokuro.velyntora'
         minSdk 26
         targetSdk 35
         versionCode 1

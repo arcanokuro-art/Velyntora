@@ -1,4 +1,4 @@
-package app.velyntora;
+package art.arcanokuro.velyntora;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import android.os.Build;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import app.velyntora.ui.start.StartScreen;
+import art.arcanokuro.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
     private StartScreen startScreen;
@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
         int background = Color.rgb(13,20,32);
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
-        enableVelyntoraFullscreen();
+        enableKritaStyleFullscreen();
         startScreen = new StartScreen(this);
         if(state!=null && state.getString("infoPage")!=null) {
             infoPage=state.getString("infoPage");
@@ -107,10 +107,10 @@ public class MainActivity extends Activity {
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if(hasFocus) enableVelyntoraFullscreen();
+        if(hasFocus) enableKritaStyleFullscreen();
     }
 
-    private void enableVelyntoraFullscreen() {
+    private void enableKritaStyleFullscreen() {
         final View decor=getWindow().getDecorView();
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             final WindowInsetsController controller=getWindow().getInsetsController();

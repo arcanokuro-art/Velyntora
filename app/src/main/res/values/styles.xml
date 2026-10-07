@@ -3,12 +3,15 @@
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#9E9E9E</item>
 
-        <!-- El fondo coincide con Inicio para evitar destellos al crear MainActivity. -->
+        <!-- El fondo de la ventana coincide con la pantalla inicial para evitar
+             destellos grises mientras Android crea MainActivity. -->
         <item name="android:windowBackground">#0D1420</item>
         <item name="android:navigationBarColor">#0D1420</item>
         <item name="android:statusBarColor">#0D1420</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+        <!-- Igual que Krita: dejar a Android/ventana gestionar el área útil. -->
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>
