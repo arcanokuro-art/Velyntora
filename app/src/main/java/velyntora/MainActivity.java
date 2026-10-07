@@ -1,4 +1,4 @@
-package velyntora;
+package app.velyntora;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import android.os.Build;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import velyntora.ui.start.StartScreen;
+import app.velyntora.ui.start.StartScreen;
 
 public class MainActivity extends Activity {
     private StartScreen startScreen;
